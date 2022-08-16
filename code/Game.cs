@@ -16,7 +16,6 @@ public partial class RhythmGame : Sandbox.Game
 		LoadContent();
 	}
 
-	[Event.Hotload]
 	public static void LoadContent()
 	{
 		Songs = new();
@@ -33,11 +32,9 @@ public partial class RhythmGame : Sandbox.Game
 			else if(chart.JsonPath.Length > 0)
 			{
 				Song song = FileSystem.Mounted.ReadJson<Song>(chart.JsonPath);
-				Log.Info(song.Name);
 				Songs.Add(song);
 			}
 		}
-		Log.Info(Songs[0]);
 	}
 
 	/// <summary>
@@ -46,7 +43,7 @@ public partial class RhythmGame : Sandbox.Game
 	public override void ClientJoined( Client client )
 	{
 		base.ClientJoined( client );
-
+		
 		// Create a pawn for this client to play with
 		var pawn = new Pawn();
 		client.Pawn = pawn;
