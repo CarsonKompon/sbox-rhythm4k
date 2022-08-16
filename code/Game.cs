@@ -5,22 +5,16 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-//
-// You don't need to put things in a namespace, but it doesn't hurt.
-//
-namespace Sandbox;
-
-/// <summary>
-/// This is your game class. This is an entity that is created serverside when
-/// the game starts, and is replicated to the client. 
-/// 
-/// You can use this to create things like HUDs and declare which player class
-/// to use for spawned players.
-/// </summary>
-public partial class MyGame : Sandbox.Game
+public partial class RhythmGame : Sandbox.Game
 {
-	public MyGame()
+	public Hud Hud {get;set;}
+	public RhythmGame()
 	{
+		if(IsServer)
+		{
+			Hud = new Hud();
+		}
+
 	}
 
 	/// <summary>
@@ -47,5 +41,14 @@ public partial class MyGame : Sandbox.Game
 			tx.Position = tx.Position + Vector3.Up * 50.0f; // raise it up
 			pawn.Transform = tx;
 		}
+
+		// Make voice chat 2D
+		client.VoiceStereo = false;
+	}
+
+	public override bool CanHearPlayerVoice( Client source, Client dest )
+	{
+		// TODO: Make it so you can only hear people in your lobby
+		return base.CanHearPlayerVoice( source, dest );
 	}
 }
