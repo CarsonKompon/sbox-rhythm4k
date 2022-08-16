@@ -1,20 +1,43 @@
 ﻿using Sandbox;
-using Sandbox.UI.Construct;
 using System;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 
 public partial class RhythmGame : Sandbox.Game
 {
 	public Hud Hud {get;set;}
+	[Net] public static List<Song> Songs {get;set;}
 	public RhythmGame()
 	{
 		if(IsServer)
 		{
 			Hud = new Hud();
 		}
+		LoadContent();
+	}
 
+	[Event.Hotload]
+	public static void LoadContent()
+	{
+		Songs = new();
+		foreach(TypeDescription _td in TypeLibrary.GetDescriptions<ChartBase>())
+		{
+			ChartBase chart = TypeLibrary.Create<ChartBase>(_td.TargetType);
+			if(chart.JsonPaths.Count > 0)
+			{
+				foreach(var jsonPath in chart.JsonPaths)
+				{
+					Songs.Add(FileSystem.Mounted.ReadJson<Song>(jsonPath));
+				}
+			}
+			else if(chart.JsonPath.Length > 0)
+			{
+				Song song = FileSystem.Mounted.ReadJson<Song>(chart.JsonPath);
+				Log.Info(song.Name);
+				Songs.Add(song);
+			}
+		}
+		Log.Info(Songs[0]);
 	}
 
 	/// <summary>
@@ -27,20 +50,6 @@ public partial class RhythmGame : Sandbox.Game
 		// Create a pawn for this client to play with
 		var pawn = new Pawn();
 		client.Pawn = pawn;
-
-		// Get all of the spawnpoints
-		var spawnpoints = Entity.All.OfType<SpawnPoint>();
-
-		// chose a random one
-		var randomSpawnPoint = spawnpoints.OrderBy( x => Guid.NewGuid() ).FirstOrDefault();
-
-		// if it exists, place the pawn there
-		if ( randomSpawnPoint != null )
-		{
-			var tx = randomSpawnPoint.Transform;
-			tx.Position = tx.Position + Vector3.Up * 50.0f; // raise it up
-			pawn.Transform = tx;
-		}
 
 		// Make voice chat 2D
 		client.VoiceStereo = false;
