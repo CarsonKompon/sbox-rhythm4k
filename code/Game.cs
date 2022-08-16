@@ -20,9 +20,9 @@ public partial class RhythmGame : Sandbox.Game
 	public static void LoadContent()
 	{
 		Songs = new();
-		foreach(TypeDescription _td in TypeLibrary.GetDescriptions<ChartBase>())
+		foreach(TypeDescription _td in TypeLibrary.GetDescriptions<SongPackBase>())
 		{
-			ChartBase chart = TypeLibrary.Create<ChartBase>(_td.TargetType);
+			SongPackBase chart = TypeLibrary.Create<SongPackBase>(_td.TargetType);
 			if(chart.JsonPaths.Count > 0)
 			{
 				foreach(var jsonPath in chart.JsonPaths)
