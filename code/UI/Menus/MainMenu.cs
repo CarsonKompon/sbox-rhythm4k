@@ -5,7 +5,6 @@ using System;
 [UseTemplate]
 public partial class MainMenu : Panel
 {
-    public bool Visible = true;
     public Panel RootBody {get;set;}
     public Image Logo {get;set;}
 
@@ -20,7 +19,7 @@ public partial class MainMenu : Panel
     [Event.Frame]
     public void OnFrame()
     {
-        if(Visible)
+        if(!HasClass("hide"))
         {
             Logo.Style.FilterHueRotate = -((RealTime.Now * 140f) % 360f);
         }
@@ -28,17 +27,17 @@ public partial class MainMenu : Panel
 
     public void buttonSingleplayer(Button button)
     {
-        Hud.Instance.ChangeMenuState((int)MainMenuState.SongSelect);
+        Hud.Instance.ChangeMenuState(MainMenuState.SongSelect);
     }
 
     public void buttonMultiplayer(Button button)
     {
-        Hud.Instance.ChangeMenuState((int)MainMenuState.SearchingForLobby);
+        Hud.Instance.ChangeMenuState(MainMenuState.SearchingForLobby);
     }
 
     public void buttonSettings(Button button)
     {
-        Hud.Instance.ChangeMenuState((int)MainMenuState.Settings);
+        Hud.Instance.ChangeMenuState(MainMenuState.Settings);
     }
 
     public void buttonHover(Button button)

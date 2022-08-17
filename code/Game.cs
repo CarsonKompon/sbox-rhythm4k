@@ -13,28 +13,6 @@ public partial class RhythmGame : Sandbox.Game
 		{
 			Hud = new Hud();
 		}
-		LoadContent();
-	}
-
-	public static void LoadContent()
-	{
-		Songs = new();
-		foreach(TypeDescription _td in TypeLibrary.GetDescriptions<SongPackBase>())
-		{
-			SongPackBase chart = TypeLibrary.Create<SongPackBase>(_td.TargetType);
-			if(chart.JsonPaths.Count > 0)
-			{
-				foreach(var jsonPath in chart.JsonPaths)
-				{
-					Songs.Add(FileSystem.Mounted.ReadJson<Song>(jsonPath));
-				}
-			}
-			else if(chart.JsonPath.Length > 0)
-			{
-				Song song = FileSystem.Mounted.ReadJson<Song>(chart.JsonPath);
-				Songs.Add(song);
-			}
-		}
 	}
 
 	/// <summary>
@@ -50,6 +28,12 @@ public partial class RhythmGame : Sandbox.Game
 
 		// Make voice chat 2D
 		client.VoiceStereo = false;
+	}
+
+	[ConCmd.Server]
+	public static void CreateLobby()
+	{
+		
 	}
 
 	public override bool CanHearPlayerVoice( Client source, Client dest )

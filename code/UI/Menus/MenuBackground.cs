@@ -13,7 +13,7 @@ public partial class MenuBackground : Panel
         var _am = ((-RealTime.Now * 100) % 200);
         Style.BackgroundPositionX = _am;
         Style.BackgroundPositionY = _am;
-        Style.FilterHueRotate = Hue;
+        Style.FilterHueRotate = MathF.Floor(Hue);
     }
 
     public void SetHue(float hue)
