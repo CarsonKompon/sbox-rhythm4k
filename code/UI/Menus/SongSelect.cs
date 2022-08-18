@@ -41,7 +41,6 @@ public partial class SongSelect : Panel
 
     public static void SelectSong(Song song)
     {
-        Log.Info(song.AlbumArt);
         Instance.AlbumArt.SetTexture(song.AlbumArt);
         Instance.SongTitle.Text = song.Name;
         Instance.SongArtist.Text = song.Artist;
@@ -81,11 +80,13 @@ public partial class SongSelect : Panel
         if(button.HasClass("active"))
         {
             Hud.Instance.ChangeMenuState(MainMenuState.None);
+            Hud.Instance.GameScreen.StartSongClient(SelectedChart);
         }
     }
 
     public void buttonBack(Button button)
     {
+        RhythmGame.LeaveLobby(Local.PlayerId.ToString());
         Hud.Instance.ChangeMenuState(MainMenuState.Title);
     }
 }

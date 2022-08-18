@@ -1,0 +1,54 @@
+<link rel="stylesheet" href="/ui/game/gamescreen.scss">
+
+<body @ref="RootBody" class="root">
+
+    <!-- Holds the Cover Art, Song Info, and Progress -->
+    <div class="song-info">
+        <div class="info-left">
+            <image @ref="AlbumArt" class="cover-art"></image>
+            <div class="difficulty-container">
+                <label @ref="DifficultyName" class="difficulty-name">Difficulty</label>
+                <label @ref="DifficultyLevel" class="difficulty-level">10</label>
+            </div>
+        </div>
+        <div class="info-right">
+            <label @ref="SongTitle" class="song-title">Song Name</label>
+            <label @ref="SongArtist" class="song-artist">Artist</label>
+            <div class="song-progress">
+                <div @ref="ProgressBar" class="bar"></div>
+                <label @ref="SongTime" class="song-time">1:23</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Holds your current Score and Max Combo -->
+    <div class="score-info">
+        <label class="header">Score</label>
+        <div class="score-holder">
+            <label @ref="ScoreBig" class="score-big">0000</label>
+            <label @ref="ScoreSmall" class="score-small">0000</label>
+        </div>
+        <div @ref="ChainContainer" class="chain-container">
+            <label class="header">Max Combo</label>
+            <label @ref="MaxComboLabel" class="max-combo">0</label>
+        </div>
+    </div>
+
+    <!-- Holds the Receptors and Arrows -->
+    <div class="game">
+        <div @ref="LaneContainer" class="lane-container">
+
+        </div>
+    </div>
+
+    <div @ref="MultiplayerContainer" class="multiplayer-container">
+        
+    </div>
+
+    <!-- Holds your current Combo -->
+    <div @ref="ComboContainer" class="combo-container">
+        <label class="header">Combo</label>
+        <label @ref="ComboLabel" class="combo">0</label>
+    </div>
+
+</body>

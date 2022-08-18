@@ -7,7 +7,9 @@
   "HasAssets": true,
   "AssetsPath": "",
   "ResourcePaths": [
-    "/charts/*"
+    "/charts/*",
+    "/sprites/*",
+    "/fonts/*"
   ],
   "HasCode": true,
   "CodePath": "/code/",

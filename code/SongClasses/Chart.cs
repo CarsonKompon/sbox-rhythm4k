@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 public class Chart
 {
@@ -31,6 +32,15 @@ public class Chart
     /// The song this chart is associated with
     /// </summary>
     public Song Song;
+
+    /// <summary>
+    /// Returns the length of the song in beats
+    /// </summary>
+    public float GetSongLength()
+    {
+        Note lastNote = Notes.OrderBy(o=>-o.Offset).ToList()[0];
+        return lastNote.Offset;
+    }
 
     /// <summary>
     /// Check if the chart is valid
