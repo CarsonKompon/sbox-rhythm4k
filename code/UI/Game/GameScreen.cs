@@ -29,7 +29,10 @@ public partial class GameScreen : Panel
     public float SongLength = 120f;
     public Sound CurrentSound;
     public List<Note> Notes = new();
+    public List<Arrow> Arrows = new();
     public bool Active = false;
+
+    public float ScreenTime = 1f;
 
     public List<Lane> Lanes = new();
 
@@ -60,6 +63,34 @@ public partial class GameScreen : Panel
     [Event.Frame]
     private void OnFrame()
     {
+        // Instantiate new notes
+        List<Note> notes = GetNextNotes();
+        foreach(Note note in notes)
+        {
+            Lane lane = Lanes[note.Lane];
+            Arrow arrow = lane.AddChild<Arrow>();
+            arrow.SetNote(note);
+            Arrows.Add(arrow);
+            Notes.Remove(note);
+        }
+
+        foreach(Lane lane in Lanes)
+        {
+            foreach(Panel child in lane.Children)
+            {
+                if(child is Arrow arrow)
+                {
+                    float percent = 100f * ((StepsToTime(arrow.Note.Offset) - CurrentSound.ElapsedTime) / ScreenTime);
+                    arrow.Style.Top = Length.Percent(percent);
+                    if(percent <= -50f)
+                    {
+                        Arrows.Remove(arrow);
+                        arrow.Delete();
+                    }
+                }
+            }
+        }
+
         if(Local.Pawn is RhythmPlayer player)
         {
             string scoreText = string.Format("{0:D8}", player.Score);
@@ -79,7 +110,7 @@ public partial class GameScreen : Panel
         }
     }
 
-    public async void StartSongClient(Chart chart)
+    public async void StartSong(Chart chart)
     {
         SetClass("hide", false);
         SetChart(chart);
@@ -108,6 +139,7 @@ public partial class GameScreen : Panel
         ComboLabel.Text = "0";
         ComboContainer.SetClass("hide", true);
         CurrentBPM = Song.BPM;
+        Log.Info(StepsToTime(1000));
         SongLength = StepsToTime(Chart.GetSongLength());
         Notes = Chart.Notes;
     }
@@ -124,14 +156,49 @@ public partial class GameScreen : Panel
         Active = false;
     }
 
-    public float TimeToSteps(float time)
+    public List<Arrow> GetArrowsToHit()
     {
-        return (25f * time * CurrentBPM) / 3f;
+        List<Arrow> arrows = new();
+        foreach(Arrow arrow in Arrows)
+        {
+            float noteTime = StepsToTime(arrow.Note.Offset);
+            float time = CurrentSound.ElapsedTime + Song.Offset;
+            if(noteTime > time - NoteTimings.Error && noteTime < time + NoteTimings.Error)
+            {
+                arrows.Add(arrow);
+            }
+        }
+        return arrows;
+    }
+
+    public List<Note> GetNextNotes()
+    {
+        List<Note> notes = new();
+        foreach(Note note in Notes)
+        {
+            float time = StepsToTime(note.Offset);
+            if(CurrentSound.ElapsedTime + Song.Offset >= time - ScreenTime)
+            {
+                notes.Add(note);
+            }
+        }
+        return notes;
     }
 
     public float StepsToTime(float steps)
     {
-        return (steps / 500) * (60 / CurrentBPM);
+        return (steps / 250) * (60 / CurrentBPM);
+    }
+
+    public void Show()
+    {
+        SetClass("hide", false);
+        Log.Info("HELP");
+    }
+
+    public void Hide()
+    {
+        SetClass("hide", true);
     }
 
 }

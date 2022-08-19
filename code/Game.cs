@@ -3,6 +3,14 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
+public static class NoteTimings
+{
+	public const float Error = 0.166f;
+	public const float Near = 0.135f;
+	public const float Crit = 0.090f;
+	public const float SCrit = 0.045f;
+}
+
 public partial class RhythmGame : Sandbox.Game
 {
 	public Hud Hud {get;set;}
@@ -49,7 +57,7 @@ public partial class RhythmGame : Sandbox.Game
 			{
 				if(client.Pawn is RhythmPlayer player)
 				{
-					player.LobbyIdent = lobby.NetworkIdent;
+					player.SetLobby(lobby.NetworkIdent);
 				}
 				break;
 			}
@@ -121,7 +129,7 @@ public partial class RhythmGame : Sandbox.Game
 		return null;
 	}
 
-	public static Chart GetChartFromString(string songName, string difficultyName)
+	public static Chart GetChartFromString(string songName, string chartName)
 	{
 		foreach(Rhythm4KSong r4kSong in Rhythm4KSong.All)
 		{
@@ -129,7 +137,7 @@ public partial class RhythmGame : Sandbox.Game
 			{
 				foreach(Chart chart in r4kSong.Song.Charts)
 				{
-					if(chart.Name == difficultyName)
+					if(chart.Name == chartName)
 					{
 						return chart;
 					}

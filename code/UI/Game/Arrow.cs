@@ -5,10 +5,10 @@ using System.Collections.Generic;
 
 public partial class Arrow : Image
 {
-    public int LaneIndex = 0;
-    public void SetLane(int i)
+    public Note Note;
+    public void SetNote(Note note)
     {
-        LaneIndex = i;
-        SetClass("lane-" + LaneIndex.ToString(), true);
+        Note = note;
+        SetClass("lane-" + note.Lane.ToString(), true);
     }
 }

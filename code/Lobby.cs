@@ -1,13 +1,14 @@
 using Sandbox;
 using System.Collections.Generic;
 
-public partial class Lobby : BaseNetworkable
+public partial class Lobby : Entity
 {
     [Net] public string Name {get;set;} = "Unnamed Lobby";
     [Net] public int MaxPlayerCount {get;set;} = 8;
     [Net] public List<long> PlayerIds {get;set;} = new();
     [Net] public long Host {get;set;}
     [Net] public bool Hidden {get;set;} = false;
+    [Net] public bool InProgress {get;set;} = false;
     public Chart Chart;
 
     public Lobby(){}
@@ -21,12 +22,37 @@ public partial class Lobby : BaseNetworkable
     }
 
     [ConCmd.Server]
-    public void SetChart(string name, string difficulty)
+    public static void SetChart(int lobbyIdent, string name, string difficulty)
     {
         Chart chart = RhythmGame.GetChartFromString(name, difficulty);
         if(chart != null)
         {
-            Chart = chart;
+            Lobby lobby =  RhythmGame.GetLobbyFromIdent(lobbyIdent);
+            if(lobby != null)
+            {
+                lobby.Chart = chart;
+            }
+        }
+    }
+
+    [ConCmd.Server]
+    public static void StartGame(int lobbyIdent)
+    {
+        Lobby lobby = RhythmGame.GetLobbyFromIdent(lobbyIdent);
+        if(lobby != null)
+        {
+            lobby.InProgress = true;
+            foreach(Client cl in Client.All)
+            {
+                foreach(long id in lobby.PlayerIds)
+                {
+                    if(cl.PlayerId == id && cl.Pawn is RhythmPlayer player)
+                    {
+                        Log.Info(lobby.Chart.Song);
+                        player.StartGame(To.Single(cl), lobby.Chart.Song.Name, lobby.Chart.Name);
+                    }
+                }
+            }
         }
     }
 

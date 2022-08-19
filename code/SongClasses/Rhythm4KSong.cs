@@ -46,6 +46,11 @@ public class Rhythm4KSong : GameResource
         Song.Sound = Sound;
         Song.AlbumArt = AlbumArt;
 
+        foreach(Chart chart in Song.Charts)
+        {
+            chart.Song = Song;
+        }
+
 		if ( !_all.Contains( this ) )
 			_all.Add( this );
 	}

@@ -31,6 +31,7 @@ button
     top: 10%;
     left: 40%;
     text-align: center;
+    text-shadow: 4px 4px black;
 
     background-color: rgb(black, 0.2);
     overflow: scroll;
@@ -41,7 +42,6 @@ button
     SongButton
     {
         color: white;
-        text-shadow: 4px 4px black;
         text-align: center;
         transition: transform 0.02s ease-in-out;
 
@@ -77,7 +77,7 @@ button
             width: 800px;
             height: 800px;
             aspect-ratio: 1;
-            
+            box-shadow: 4px 4px rgb(black, 0.5);
         }
         
         .difficulty-container
@@ -99,6 +99,7 @@ button
                 {
                     font-size: 28px;
                     font-weight: 600;
+                    text-shadow: 4px 4px rgb(black, 0.5);
                 }
 
                 .scrollable-difficulty
@@ -140,30 +141,35 @@ button
         padding-top: 14px;
         font-size: 18px;
         text-decoration: underline;
+        text-shadow: 4px 4px rgb(black, 0.5);
     }
 
     .song-title
     {
         font-size: 42px;
         font-weight: 800;
+        text-shadow: 4px 4px rgb(black, 0.5);
     }
 
     .song-artist
     {
         font-size: 32px;
         font-weight: 700;
+        text-shadow: 4px 4px rgb(black, 0.5);
     }
 
     .song-charter
     {
         font-size: 24px;
         font-weight: 500;
+        text-shadow: 4px 4px rgb(black, 0.5);
     }
 
     .song-bpm
     {
         font-size: 20px;
         font-weight: 500;
+        text-shadow: 4px 4px rgb(black, 0.5);
     }
 
     .btn-start
@@ -180,6 +186,7 @@ button
         align-items: center;
         transition: transform 0.1s ease-in-out;
         transition: background-color 0.1s ease-in-out;
+        box-shadow: 4px 4px rgb(black, 0.5);
 
         &.active
         {

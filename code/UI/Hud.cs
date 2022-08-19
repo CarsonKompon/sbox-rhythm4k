@@ -1,7 +1,7 @@
 using Sandbox;
 using Sandbox.UI;
 
-public enum MainMenuState {Title, SearchingForLobby, Lobby, SongSelect, Settings, None}
+public enum MainMenuState {Title, SearchingForLobby, Lobby, SongSelect, Settings, Game, None}
 
 public partial class Hud : HudEntity<RootPanel>
 {
@@ -23,12 +23,6 @@ public partial class Hud : HudEntity<RootPanel>
         GameScreen = RootPanel.AddChild<GameScreen>();
 
         Instance = this;
-    }
-
-    [ClientRpc]
-    public void ChangeMenuStateRpc(int stateInt)
-    {
-        ChangeMenuState((MainMenuState)stateInt);
     }
 
     public void ChangeMenuState(MainMenuState state)
@@ -53,13 +47,18 @@ public partial class Hud : HudEntity<RootPanel>
                 MenuBackground.SetClass("hide", false);
                 MenuBackground.SetHue(-20);
                 break;
+            case MainMenuState.Game:
             case MainMenuState.None:
                 MainMenu.SetClass("hide", true);
                 SongSelect.SetClass("hide", true);
                 MenuBackground.SetClass("hide", true);
-                
-                //GameScreen.SetClass("hide", false);
                 break;
         }
+        GameScreen.SetClass("hide", MenuState != MainMenuState.Game); 
+    }
+
+    public void SetLobby(int lobbyIdent)
+    {
+        SongSelect.LobbyIdent = lobbyIdent;
     }
 }

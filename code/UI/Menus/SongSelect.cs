@@ -18,6 +18,7 @@ public partial class SongSelect : Panel
     public Button ButtonStart {get;set;}
     public Button ButtonBack {get;set;}
     public Label LabelSelectedChart {get;set;}
+    public int LobbyIdent;
 
     public static SongSelect Instance;
 
@@ -50,7 +51,6 @@ public partial class SongSelect : Panel
 
         foreach(var chart in song.Charts)
         {
-            chart.Song = song;
             var button = Instance.DifficultyScrollBody.AddChild<DifficultyButton>();
             button.SetChart(chart);
         }
@@ -60,6 +60,7 @@ public partial class SongSelect : Panel
     public static void SelectChart(Chart chart)
     {
         Instance.SelectedChart = chart;
+        Lobby.SetChart(Instance.LobbyIdent, chart.Song.Name, chart.Name);
         foreach(var panel in Instance.DifficultyScrollBody.Children)
         {
             if(panel is DifficultyButton button)
@@ -80,7 +81,10 @@ public partial class SongSelect : Panel
         if(button.HasClass("active"))
         {
             Hud.Instance.ChangeMenuState(MainMenuState.None);
-            Hud.Instance.GameScreen.StartSongClient(SelectedChart);
+            if(Local.Pawn is RhythmPlayer player)
+            {
+                Lobby.StartGame(player.LobbyIdent);
+            }
         }
     }
 
