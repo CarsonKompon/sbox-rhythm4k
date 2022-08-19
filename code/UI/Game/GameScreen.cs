@@ -31,8 +31,9 @@ public partial class GameScreen : Panel
     public List<Note> Notes = new();
     public List<Arrow> Arrows = new();
     public bool Active = false;
+    public int CritValue = 1;
 
-    public float ScreenTime = 1f;
+    public float ScreenTime = 0.7f;
 
     public List<Lane> Lanes = new();
 
@@ -63,50 +64,63 @@ public partial class GameScreen : Panel
     [Event.Frame]
     private void OnFrame()
     {
-        // Instantiate new notes
-        List<Note> notes = GetNextNotes();
-        foreach(Note note in notes)
-        {
-            Lane lane = Lanes[note.Lane];
-            Arrow arrow = lane.AddChild<Arrow>();
-            arrow.SetNote(note);
-            Arrows.Add(arrow);
-            Notes.Remove(note);
-        }
-
-        foreach(Lane lane in Lanes)
-        {
-            foreach(Panel child in lane.Children)
-            {
-                if(child is Arrow arrow)
-                {
-                    float percent = 100f * ((StepsToTime(arrow.Note.Offset) - CurrentSound.ElapsedTime) / ScreenTime);
-                    arrow.Style.Top = Length.Percent(percent);
-                    if(percent <= -50f)
-                    {
-                        Arrows.Remove(arrow);
-                        arrow.Delete();
-                    }
-                }
-            }
-        }
-
         if(Local.Pawn is RhythmPlayer player)
         {
+            if(Active)
+            {
+                // Instantiate new notes
+                if(Notes.Count > 0)
+                {
+                    List<Note> notes = GetNextNotes();
+                    foreach(Note note in notes)
+                    {
+                        Lane lane = Lanes[note.Lane];
+                        Arrow arrow = lane.AddChild<Arrow>();
+                        arrow.SetNote(note);
+                        Arrows.Add(arrow);
+                        Notes.Remove(note);
+                    }
+                }
+                else if(Arrows.Count == 0)
+                {
+                    Active = false;
+                    EndSong();
+                }
+
+                foreach(Lane lane in Lanes)
+                {
+                    foreach(Panel child in lane.Children)
+                    {
+                        if(child is Arrow arrow)
+                        {
+                            float noteTime = StepsToTime(arrow.Note.Offset);
+                            float percent = 100f * ((noteTime - CurrentSound.ElapsedTime) / ScreenTime);
+                            arrow.Style.Top = Length.Percent(percent);
+                            if(!arrow.Missed && CurrentSound.ElapsedTime + Song.Offset > noteTime + NoteTimings.Error)
+                            {
+                                player.ResetCombo();
+                                arrow.Missed = true;
+                            }
+                            if(percent <= -50f)
+                            {
+                                Arrows.Remove(arrow);
+                                arrow.Delete();
+                            }
+                        }
+                    }
+                }
+
+                TimeSpan time = TimeSpan.FromSeconds(CurrentSound.ElapsedTime);
+                SongTime.Text = string.Format("{0:D2}:{1:D2}", time.Minutes, time.Seconds);
+                ProgressBar.Style.Width = Length.Percent((CurrentSound.ElapsedTime / SongLength) * 100f);
+            }
+
             string scoreText = string.Format("{0:D8}", player.Score);
             ScoreBig.Text = scoreText.Substring(0, 4);
             ScoreSmall.Text = scoreText.Substring(4, 4);
             MaxComboLabel.Text = player.MaxCombo.ToString();
-            int combo = player.Combo;
-            ComboLabel.SetClass("hide", combo < 5);
-            ComboLabel.Text = combo.ToString();
-        }
-
-        if(Active)
-        {
-            TimeSpan time = TimeSpan.FromSeconds(CurrentSound.ElapsedTime);
-            SongTime.Text = string.Format("{0:D2}:{1:D2}", time.Minutes, time.Seconds);
-            ProgressBar.Style.Width = Length.Percent((CurrentSound.ElapsedTime / SongLength) * 100f);
+            ComboContainer.SetClass("hide", player.Combo < 10);
+            ComboLabel.Text = player.Combo.ToString();
         }
     }
 
@@ -118,6 +132,14 @@ public partial class GameScreen : Panel
         await GameTask.DelayRealtimeSeconds(2);
 
         StartChart();
+    }
+
+    public async void EndSong()
+    {
+        await GameTask.DelayRealtimeSeconds(3);
+
+        CurrentSound.Stop();
+        Hud.Instance.ChangeMenuState(MainMenuState.SongSelect);
     }
 
     public void SetChart(Chart chart)
@@ -139,9 +161,9 @@ public partial class GameScreen : Panel
         ComboLabel.Text = "0";
         ComboContainer.SetClass("hide", true);
         CurrentBPM = Song.BPM;
-        Log.Info(StepsToTime(1000));
         SongLength = StepsToTime(Chart.GetSongLength());
         Notes = Chart.Notes;
+        CritValue = (int)MathF.Floor(10000000f/Notes.Count);
     }
 
     public void StartChart()
@@ -158,16 +180,24 @@ public partial class GameScreen : Panel
 
     public List<Arrow> GetArrowsToHit()
     {
+        float[] noteTimes = {1000, 1000, 1000, 1000};
+        Arrow[] distantArrows = {null, null, null, null};
         List<Arrow> arrows = new();
         foreach(Arrow arrow in Arrows)
         {
             float noteTime = StepsToTime(arrow.Note.Offset);
             float time = CurrentSound.ElapsedTime + Song.Offset;
-            if(noteTime > time - NoteTimings.Error && noteTime < time + NoteTimings.Error)
+            float distance = MathF.Abs(time - noteTime);
+            if(distance < NoteTimings.Error && noteTime < noteTimes[arrow.Note.Lane])
             {
+                if(distantArrows[arrow.Note.Lane] != null) arrows.Remove(distantArrows[arrow.Note.Lane]);
+                distantArrows[arrow.Note.Lane] = arrow;
+                noteTimes[arrow.Note.Lane] = distance;
+                arrow.Points = (int)MathF.Floor((float)CritValue / (distance > NoteTimings.Critical ? 2f : 1f));
                 arrows.Add(arrow);
             }
         }
+
         return arrows;
     }
 
@@ -193,7 +223,6 @@ public partial class GameScreen : Panel
     public void Show()
     {
         SetClass("hide", false);
-        Log.Info("HELP");
     }
 
     public void Hide()

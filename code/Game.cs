@@ -6,9 +6,8 @@ using System.Collections.Generic;
 public static class NoteTimings
 {
 	public const float Error = 0.166f;
-	public const float Near = 0.135f;
-	public const float Crit = 0.090f;
-	public const float SCrit = 0.045f;
+	public const float Near = 0.115f;
+	public const float Critical = 0.045f;
 }
 
 public partial class RhythmGame : Sandbox.Game

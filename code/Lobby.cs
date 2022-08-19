@@ -48,7 +48,6 @@ public partial class Lobby : Entity
                 {
                     if(cl.PlayerId == id && cl.Pawn is RhythmPlayer player)
                     {
-                        Log.Info(lobby.Chart.Song);
                         player.StartGame(To.Single(cl), lobby.Chart.Song.Name, lobby.Chart.Name);
                     }
                 }

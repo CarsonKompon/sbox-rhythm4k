@@ -8,11 +8,10 @@ namespace Sandbox;
 partial class RhythmPlayer : AnimatedEntity
 {
 	[Net] public int LobbyIdent {get;set;} = -1;
-
-	[Net, Predicted] public int Score {get;set;} = 0;
-	[Net, Predicted] public int MaxCombo {get;set;} = 0;
 	public bool InGame = false;
+	public int Score= 0;
 	public int Combo = 0;
+	public int MaxCombo  = 0;
 	/// <summary>
 	/// Called when the entity is first created 
 	/// </summary>
@@ -44,17 +43,25 @@ partial class RhythmPlayer : AnimatedEntity
 			};
 
 			List<Arrow> arrows = Hud.Instance.GameScreen.GetArrowsToHit();
-			Log.Info(arrows.Count);
 			foreach(Arrow arrow in arrows)
 			{
 				if(pressed[arrow.Note.Lane])
 				{
+					Score += arrow.Points;
+					Combo += 1;
+					if(Combo > MaxCombo) MaxCombo = Combo;
+					Log.Info($"{Score}, {Combo}, {arrow.Points}");
 					// TODO: Give score and combo
 					Hud.Instance.GameScreen.Arrows.Remove(arrow);
 					arrow.Delete();
 				}
 			}
 		}
+	}
+
+	public void ResetCombo()
+	{
+		Combo = 0;
 	}
 
 	public void SetLobby(int lobbyIdent)
@@ -72,7 +79,6 @@ partial class RhythmPlayer : AnimatedEntity
 	[ClientRpc]
     public void StartGame(string name, string difficulty)
     {
-        Log.Info("ouch");
         Chart chart = RhythmGame.GetChartFromString(name, difficulty);
         if(chart != null)
         {
