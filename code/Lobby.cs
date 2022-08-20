@@ -9,6 +9,7 @@ public partial class Lobby : Entity
     [Net] public long Host {get;set;}
     [Net] public bool Hidden {get;set;} = false;
     [Net] public bool InProgress {get;set;} = false;
+    [Net] public int Finished {get;set;} = 0;
     public Chart Chart;
 
     public Lobby(){}
@@ -30,6 +31,7 @@ public partial class Lobby : Entity
             Lobby lobby =  RhythmGame.GetLobbyFromIdent(lobbyIdent);
             if(lobby != null)
             {
+                Log.Info($"Rhythm4K: Loaded Chart '{chart.Name} ({chart.Difficulty})'");
                 lobby.Chart = chart;
             }
         }
@@ -41,7 +43,9 @@ public partial class Lobby : Entity
         Lobby lobby = RhythmGame.GetLobbyFromIdent(lobbyIdent);
         if(lobby != null)
         {
+            Log.Info($"Rhythm4K: Starting Game in Lobby #{lobbyIdent}");
             lobby.InProgress = true;
+            lobby.Finished = 0;
             foreach(Client cl in Client.All)
             {
                 foreach(long id in lobby.PlayerIds)
@@ -55,6 +59,56 @@ public partial class Lobby : Entity
         }
     }
 
+    [ConCmd.Server]
+    public static void SetFinished(string idString)
+    {
+        long id = long.Parse(idString);
+        Client client = RhythmGame.GetClientFromId(id);
+        if(client?.Pawn is RhythmPlayer player)
+        {
+            Lobby lobby = RhythmGame.GetLobbyFromIdent(player.LobbyIdent);
+            if(lobby != null)
+            {
+                Log.Info($"Rhythm4K: Player {client.Name} finished in Lobby #{player.LobbyIdent}");
+                lobby.Finished++;
+
+                if(lobby.Finished >= lobby.PlayerIds.Count)
+                {
+                    lobby.ReturnToLobby();
+                }
+            }
+        }
+    }
+
+    public void ReturnToLobby()
+    {
+        Log.Info($"Rhythm4K: Lobby #{NetworkIdent} returned to lobby");
+        if(MaxPlayerCount == 1)
+        {
+            ReturnToSongSelect(Host);
+            return;
+        }
+        foreach(Client cl in Client.All)
+        {
+            foreach(long id in PlayerIds)
+            {
+                if(cl.PlayerId == id && cl.Pawn is RhythmPlayer player)
+                {
+                    player.ReturnToLobby(To.Single(cl));
+                }
+            }
+        }
+    }
+
+    public void ReturnToSongSelect(long id)
+    {
+        Client client = RhythmGame.GetClientFromId(id);
+        if(client?.Pawn is RhythmPlayer player)
+        {
+            player.ReturnToSongSelect(To.Single(client));
+        }
+    }
+
     public void AddPlayer(long id)
     {
         if(HasPlayer(id)) return;
@@ -62,17 +116,41 @@ public partial class Lobby : Entity
         PlayerIds.Add(id);
     }
 
-    public void RemovePlayer(long id)
+    public bool RemovePlayer(long id)
     {
-        if(!HasPlayer(id)) return;
+        if(!HasPlayer(id)) return false;
+
+        if(id == Host && PlayerIds.Count > 1)
+        {
+            // Migrate Hosts
+            SetHost(PlayerIds[0]);
+        }
+
+        Client client = RhythmGame.GetClientFromId(id);
+        if(client.Pawn is RhythmPlayer player)
+        {
+            player.LobbyIdent = -1;
+        }
 
         PlayerIds.Remove(id);
 
-        // Migrate hosts
-        if(PlayerIds.Count >= 1)
+        if(PlayerIds.Count == 0) return true;
+        return false;
+    }
+
+    public void PlayerQuit(long id)
+    {
+        if(!HasPlayer(id)) return;
+
+        if(id == Host && MaxPlayerCount == 1)
         {
-            SetHost(PlayerIds[0]);
+            Log.Info($"Rhythm4K: Player {id} returned to song select");
+            // Return to song select
+            ReturnToSongSelect(id);
+            return;
         }
+
+        RemovePlayer(id);
     }
 
     public bool HasPlayer(long id)

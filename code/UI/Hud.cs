@@ -40,6 +40,7 @@ public partial class Hud : HudEntity<RootPanel>
                 SongSelect.InitSongs();
                 MainMenu.SetClass("hide", true);
                 SongSelect.SetClass("hide", false);
+                SongSelect.Deselect();
                 MenuBackground.SetClass("hide", false);
                 MenuBackground.SetHue(-10);
                 break;
@@ -54,7 +55,7 @@ public partial class Hud : HudEntity<RootPanel>
                 MenuBackground.SetClass("hide", true);
                 break;
         }
-        GameScreen.SetClass("hide", MenuState != MainMenuState.Game); 
+        GameScreen.Show(MenuState == MainMenuState.Game);
     }
 
     public void SetLobby(int lobbyIdent)

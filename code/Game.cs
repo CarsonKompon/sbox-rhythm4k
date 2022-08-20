@@ -5,9 +5,8 @@ using System.Collections.Generic;
 
 public static class NoteTimings
 {
-	public const float Error = 0.166f;
-	public const float Near = 0.115f;
-	public const float Critical = 0.045f;
+	public const float Error = 0.150f;
+	public const float Critical = 0.046f;
 }
 
 public partial class RhythmGame : Sandbox.Game
@@ -50,6 +49,8 @@ public partial class RhythmGame : Sandbox.Game
 		long id = long.Parse(host);
 		Lobby lobby = new Lobby(id, name, maxPlayerCount, hidden);
 		Lobbies.Add(lobby);
+		
+		Log.Info($"Rhythm4K: Creating Lobby '{name}' as #{lobby.NetworkIdent}");
 		foreach(Client client in Client.All)
 		{
 			if(client.PlayerId == id)
@@ -70,10 +71,11 @@ public partial class RhythmGame : Sandbox.Game
 		Lobby lobby = GetLobbyFromIdent(lobbyIdent);
 		if(lobby != null)
 		{
-			lobby.AddPlayer(id);
 			Client client = GetClientFromId(id);
 			if(client != null && client.Pawn is RhythmPlayer player)
 			{
+				Log.Info($"Rhythm4K: Player {id} is joining lobby #{lobbyIdent}");
+				lobby.AddPlayer(id);
 				player.LobbyIdent = lobby.NetworkIdent;
 			}
 		}
@@ -89,11 +91,45 @@ public partial class RhythmGame : Sandbox.Game
 			Lobby lobby = GetLobbyFromIdent(player.LobbyIdent);
 			if(lobby != null)
 			{
-				lobby.RemovePlayer(id);
-				player.LobbyIdent = -1;
+				Log.Info($"Rhythm4K: Player {id} is leaving Lobby #{player.LobbyIdent}");
+				if(lobby.RemovePlayer(id))
+				{
+					// If the lobby is empty
+					Log.Info($"Rhythm4K: Lobby #{lobby.NetworkIdent} has been destroyed");
+					Lobbies.Remove(lobby);
+					lobby.Delete();
+				}
 			}
 		}
 	}
+
+	[ConCmd.Server]
+	public static void QuitLobby(string idString)
+	{
+		long id = long.Parse(idString);
+		Client client = GetClientFromId(id);
+		if(client?.Pawn is RhythmPlayer player && player.LobbyIdent != -1)
+		{
+			Lobby lobby = GetLobbyFromIdent(player.LobbyIdent);
+			if(lobby != null)
+			{
+				Log.Info($"Rhythm4K: Player {id} is quitting Lobby #{player.LobbyIdent}");
+				lobby.PlayerQuit(id);
+			}
+		}
+	}
+
+	// [ConCmd.Server]
+	// public static void QuitGame(string idString)
+	// {
+	// 	long id = long.Parse(idString);
+	// 	Client client = GetClientFromId(id);
+	// 	if(client != null && client.Pawn is RhythmPlayer player && player.LobbyIdent != -1)
+	// 	{
+	// 		lobby.QuitPlayer(id);
+	// 		pla
+	// 	}
+	// }
 
 	public static bool InLobby(long id)
 	{

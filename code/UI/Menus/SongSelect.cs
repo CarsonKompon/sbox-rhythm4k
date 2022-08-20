@@ -5,7 +5,7 @@ using System;
 [UseTemplate]
 public partial class SongSelect : Panel
 {
-    public Chart SelectedChart;
+    public Chart SelectedChart = null;
     public Panel RootBody {get;set;}
     public Panel ScrollBody {get;set;}
 
@@ -92,6 +92,18 @@ public partial class SongSelect : Panel
     {
         RhythmGame.LeaveLobby(Local.PlayerId.ToString());
         Hud.Instance.ChangeMenuState(MainMenuState.Title);
+    }
+
+    public void Deselect()
+    {
+        Instance.AlbumArt.SetTexture("");
+        Instance.SongTitle.Text = "";
+        Instance.SongArtist.Text = "";
+        Instance.SongCharter.Text = "";
+        Instance.SongBpm.Text = "";
+        Instance.DifficultyScrollBody.DeleteChildren();
+        Instance.SelectedChart = null;
+        Instance.ButtonStart.SetClass("active", false);
     }
 }
 

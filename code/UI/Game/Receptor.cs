@@ -8,6 +8,7 @@ public partial class Receptor : Panel
     public int LaneIndex = 0;
     public Image Sprite;
     public Image GlowSprite;
+    public RealTimeSince Timer = 1f;
 
     public Receptor()
     {
@@ -17,6 +18,15 @@ public partial class Receptor : Panel
         GlowSprite.SetClass("receptor-glow", true);
     }
 
+    [Event.Frame]
+    public void OnFrame()
+    {
+        if(Timer > 0 && GlowSprite.HasClass("show"))
+        {
+            GlowSprite.RemoveClass("show");
+        }
+    }
+
     public void SetLane(int i)
     {
         LaneIndex = i;
@@ -24,5 +34,11 @@ public partial class Receptor : Panel
         AddClass(_class);
         Sprite.AddClass(_class);
         GlowSprite.AddClass(_class);
+    }
+
+    public void Glow(float hue = 0f)
+    {
+        GlowSprite.AddClass("show");
+        Timer = 0.1f;
     }
 }

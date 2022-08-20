@@ -12,6 +12,7 @@ partial class RhythmPlayer : AnimatedEntity
 	public int Score= 0;
 	public int Combo = 0;
 	public int MaxCombo  = 0;
+	public float QuitTime = 0f;
 	/// <summary>
 	/// Called when the entity is first created 
 	/// </summary>
@@ -35,6 +36,7 @@ partial class RhythmPlayer : AnimatedEntity
 
 		if(LobbyIdent != -1 && InGame)
 		{
+			// Get Inputs
 			bool[] pressed = {
 				Input.Pressed(InputButton.Left),
 				Input.Pressed(InputButton.Back),
@@ -42,19 +44,49 @@ partial class RhythmPlayer : AnimatedEntity
 				Input.Pressed(InputButton.Right),
 			};
 
+			// Hit Arrows
 			List<Arrow> arrows = Hud.Instance.GameScreen.GetArrowsToHit();
+			float lowestOffset = -1f;
 			foreach(Arrow arrow in arrows)
 			{
+				if(arrow.Missed) continue;
+				if(lowestOffset == -1f || arrow.Note.Offset < lowestOffset) lowestOffset = arrow.Note.Offset;
 				if(pressed[arrow.Note.Lane])
 				{
 					Score += arrow.Points;
 					Combo += 1;
 					if(Combo > MaxCombo) MaxCombo = Combo;
-					Log.Info($"{Score}, {Combo}, {arrow.Points}");
-					// TODO: Give score and combo
+
+					Receptor rec = Hud.Instance.GameScreen.Lanes[arrow.Note.Lane].Receptor;
+					rec.Glow();
+
 					Hud.Instance.GameScreen.Arrows.Remove(arrow);
 					arrow.Delete();
 				}
+			}
+
+			// Remove any arrows that were skipped (if any)
+			foreach(Arrow arrow in arrows)
+			{
+				if(arrow != null && !arrow.Missed && arrow.Note.Offset < lowestOffset)
+				{
+					arrow.Missed = true;
+					ResetCombo();
+				}
+			}
+
+			if(Input.Down(InputButton.Menu))
+			{
+				QuitTime += Time.Delta;
+				if(QuitTime >= 3f)
+				{
+					RhythmGame.QuitLobby(Client.PlayerId.ToString());
+					QuitTime = -100f;
+				}
+			}
+			else
+			{
+				QuitTime = 0f;
 			}
 		}
 	}
@@ -87,5 +119,20 @@ partial class RhythmPlayer : AnimatedEntity
 			InGame = true;
         }
     }
+
+	[ClientRpc]
+	public void ReturnToLobby()
+	{
+		Hud.Instance.ChangeMenuState(MainMenuState.Lobby);
+		InGame = false;
+	}
+
+	[ClientRpc]
+	public void ReturnToSongSelect()
+	{
+		Hud.Instance.GameScreen.StopMusic();
+		Hud.Instance.ChangeMenuState(MainMenuState.SongSelect);
+		InGame = false;
+	}
 
 }
