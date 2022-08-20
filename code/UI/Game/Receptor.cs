@@ -36,8 +36,10 @@ public partial class Receptor : Panel
         GlowSprite.AddClass(_class);
     }
 
-    public void Glow(float hue = 0f)
+    public void Glow(Arrow arrow)
     {
+        GlowSprite.Style.FilterHueRotate = arrow.Style.FilterHueRotate;
+        GlowSprite.Style.FilterSaturate = arrow.Style.FilterSaturate;
         GlowSprite.AddClass("show");
         Timer = -0.1f;
     }

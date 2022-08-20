@@ -146,7 +146,6 @@
 .game
 {
     position: absolute;
-    top: 0px;
     left: 50%;
     background-color: black;
     border-left: 4px solid white;
@@ -158,7 +157,7 @@
     .lane-container
     {
         position: absolute;
-        top: 0px;
+        top: 100px;
         left: 0px;
         width: 100%;
         height: 100%;
@@ -178,15 +177,9 @@
             {
                 z-index: 1;
                 position: absolute;
+                background-size: contain;
                 width: 142px;
                 height: 142px;
-                margin-top: 100px;
-
-                &.downscroll
-                {
-                    margin-top: 0px;
-                    margin-bottom: 100px;
-                }
 
                 .receptor-arrow
                 {
@@ -262,14 +255,8 @@
                 background-size: contain;
                 width: 142px;
                 height: 142px;
-                margin-top: 100px;
-                top: 100%;
-
-                &.downscroll
-                {
-                    margin-top: 0px;
-                    margin-bottom: 100px;
-                }
+                //transform: scaleY(1.65);
+                
 
                 &.lane-0
                 {

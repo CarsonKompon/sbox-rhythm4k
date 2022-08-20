@@ -58,7 +58,7 @@ partial class RhythmPlayer : AnimatedEntity
 					if(Combo > MaxCombo) MaxCombo = Combo;
 
 					Receptor rec = Hud.Instance.GameScreen.Lanes[arrow.Note.Lane].Receptor;
-					rec.Glow();
+					rec.Glow(arrow);
 
 					Hud.Instance.GameScreen.Arrows.Remove(arrow);
 					arrow.Delete();
@@ -78,7 +78,7 @@ partial class RhythmPlayer : AnimatedEntity
 			if(Input.Down(InputButton.Menu))
 			{
 				QuitTime += Time.Delta;
-				if(QuitTime >= 3f)
+				if(QuitTime >= 2f)
 				{
 					RhythmGame.QuitLobby(Client.PlayerId.ToString());
 					QuitTime = -100f;

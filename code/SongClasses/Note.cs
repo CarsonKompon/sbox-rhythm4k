@@ -25,4 +25,9 @@ public class Note
     /// The note's lane
     /// </summary>
     public int Lane {get;set;}
+
+    /// <summary>
+    /// The time in seconds that the note appears. This is calculated on game launch and is not stored in the chart file.
+    /// </summary>
+    public float BakedTime;
 }

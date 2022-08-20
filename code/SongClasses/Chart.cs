@@ -34,9 +34,18 @@ public class Chart
     public Song Song;
 
     /// <summary>
-    /// Returns the length of the song in beats
+    /// Returns the length of the song in seconds
     /// </summary>
     public float GetSongLength()
+    {
+        Note lastNote = Notes.OrderBy(o=>-o.BakedTime).ToList()[0];
+        return lastNote.BakedTime;
+    }
+
+    /// <summary>
+    /// Returns the length of the song in beats
+    /// </summary>
+    public float GetSongLengthBeats()
     {
         Note lastNote = Notes.OrderBy(o=>-o.Offset).ToList()[0];
         return lastNote.Offset;

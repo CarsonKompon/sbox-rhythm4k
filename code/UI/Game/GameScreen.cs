@@ -31,6 +31,7 @@ public partial class GameScreen : Panel
     public RealTimeSince CurrentTime = 0f;
     public List<Note> Notes = new();
     public List<Arrow> Arrows = new();
+    public List<BpmChange> BpmChanges = new();
     public bool Active = false;
     public int CritValue = 1;
 
@@ -69,7 +70,22 @@ public partial class GameScreen : Panel
         {
             if(Active)
             {
-                Log.Info($"{Notes.Count} {Arrows.Count}");
+                // Check for BPM Change
+                if(BpmChanges.Count > 0)
+                {
+                    foreach(BpmChange bpmchange in BpmChanges)
+                    {
+                        if(CurrentTime >= bpmchange.BakedTime)
+                        {
+                            CurrentBPM = bpmchange.BPM;
+                            Log.Info($"NEW BPM JUST DROPPED: {CurrentBPM}");
+                            Log.Info(BpmChanges.Count);
+                            BpmChanges.Remove(bpmchange);
+                            break;
+                        }
+                    }
+                }
+
                 // Instantiate new notes
                 if(Notes.Count > 0)
                 {
@@ -90,10 +106,10 @@ public partial class GameScreen : Panel
                     {
                         if(child is Arrow arrow)
                         {
-                            float noteTime = StepsToTime(arrow.Note.Offset);
+                            float noteTime = arrow.Note.BakedTime;
                             float percent = 100f * ((noteTime - CurrentTime) / ScreenTime);
                             arrow.Style.Top = Length.Percent(percent);
-                            if(!arrow.Missed && CurrentTime + Song.Offset > noteTime + NoteTimings.Error)
+                            if(!arrow.Missed && CurrentTime > noteTime + NoteTimings.Error)
                             {
                                 player.ResetCombo();
                                 arrow.Missed = true;
@@ -160,12 +176,17 @@ public partial class GameScreen : Panel
         ComboLabel.Text = "0";
         ComboContainer.SetClass("hide", true);
         CurrentBPM = Song.BPM;
-        SongLength = StepsToTime(Chart.GetSongLength());
+        SongLength = Chart.GetSongLength();
         CritValue = (int)MathF.Floor(10000000f/Chart.Notes.Count);
 
         foreach(Note note in Chart.Notes)
         {
             Notes.Add(note);
+        }
+
+        foreach(BpmChange bpmchange in Chart.BpmChanges)
+        {
+            BpmChanges.Add(bpmchange);
         }
 
         Log.Info(CritValue);
@@ -174,7 +195,7 @@ public partial class GameScreen : Panel
     public void StartChart()
     {
         CurrentSound = Sound.FromScreen(Song.Sound);
-        CurrentTime = 0f;
+        CurrentTime = Song.Offset;
         Active = true;
     }
 
@@ -191,8 +212,8 @@ public partial class GameScreen : Panel
         List<Arrow> arrows = new();
         foreach(Arrow arrow in Arrows)
         {
-            float noteTime = StepsToTime(arrow.Note.Offset);
-            float time = CurrentTime + Song.Offset;
+            float noteTime = arrow.Note.BakedTime;
+            float time = CurrentTime;
             float distance = MathF.Abs(time - noteTime);
             if(distance < NoteTimings.Error && noteTime < noteTimes[arrow.Note.Lane])
             {
@@ -212,18 +233,12 @@ public partial class GameScreen : Panel
         List<Note> notes = new();
         foreach(Note note in Notes)
         {
-            float time = StepsToTime(note.Offset);
-            if(CurrentTime + Song.Offset >= time - ScreenTime)
+            if(CurrentTime >= note.BakedTime - ScreenTime)
             {
                 notes.Add(note);
             }
         }
         return notes;
-    }
-
-    public float StepsToTime(float steps)
-    {
-        return (steps / 250) * (60 / CurrentBPM);
     }
 
     public void ClearArrows()
