@@ -12,8 +12,6 @@ public partial class MainMenu : Panel
     {
         if(RootBody == null) Log.Warning("NO ROOTBODY!");
         if(Logo != null) Logo.SetTexture("/sprites/logo.png");
-        var q = new Package.Query();
-        q.Type = Package.Type.Content;
     }
 
     [Event.Frame]

@@ -1,0 +1,25 @@
+<link rel="stylesheet" href="/ui/menus/settingsmenu.scss">
+
+<body class="root">
+
+    <div class="menu">
+
+		<div class="setting-option">
+            <label class="setting-name">Downscroll</label>
+            <div class="setting-holder">
+                <switch @ref="Downscroll"></switch>
+            </div>
+        </div>
+
+        <div class="setting-option">
+            <label class="setting-name">Scroll Speed</label>
+            <div class="setting-holder">
+                <SliderEntry min="1" max="100" @value="ScrollSpeed"></SliderEntry>
+            </div>
+        </div>
+
+    </div>
+
+    <button class="btn-back" onclick="buttonBack( this )" >BACK</button>
+
+</body>

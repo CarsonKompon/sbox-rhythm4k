@@ -9,6 +9,7 @@ public partial class Hud : HudEntity<RootPanel>
     public MenuBackground MenuBackground {get;set;}
     public MainMenu MainMenu {get;set;}
     public SongSelect SongSelect {get;set;}
+    public SettingsMenu SettingsMenu {get;set;}
     public GameScreen GameScreen {get;set;}
     public static Hud Instance {get;set;}
     public Hud()
@@ -20,6 +21,7 @@ public partial class Hud : HudEntity<RootPanel>
         MenuBackground = RootPanel.AddChild<MenuBackground>();
         MainMenu = RootPanel.AddChild<MainMenu>();
         SongSelect = RootPanel.AddChild<SongSelect>();
+        SettingsMenu = RootPanel.AddChild<SettingsMenu>();
         GameScreen = RootPanel.AddChild<GameScreen>();
 
         Instance = this;
@@ -33,6 +35,7 @@ public partial class Hud : HudEntity<RootPanel>
             case MainMenuState.Title:
                 MainMenu.SetClass("hide", false);
                 SongSelect.SetClass("hide", true);
+                SettingsMenu.SetClass("hide", true);
                 MenuBackground.SetClass("hide", false);
                 MenuBackground.SetHue(0);
                 break;
@@ -47,6 +50,11 @@ public partial class Hud : HudEntity<RootPanel>
             case MainMenuState.SearchingForLobby:
                 MenuBackground.SetClass("hide", false);
                 MenuBackground.SetHue(-20);
+                break;
+            case MainMenuState.Settings:
+                MainMenu.SetClass("hide", true);
+                SettingsMenu.SetClass("hide", false);
+                MenuBackground.SetHue(10);
                 break;
             case MainMenuState.Game:
             case MainMenuState.None:

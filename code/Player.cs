@@ -111,6 +111,10 @@ partial class RhythmPlayer : AnimatedEntity
 	[ClientRpc]
     public void StartGame(string name, string difficulty)
     {
+		Score = 0;
+		Combo = 0;
+		MaxCombo = 0;
+		
         Chart chart = RhythmGame.GetChartFromString(name, difficulty);
         if(chart != null)
         {

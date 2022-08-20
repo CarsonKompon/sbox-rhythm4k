@@ -78,8 +78,6 @@ public partial class GameScreen : Panel
                         if(CurrentTime >= bpmchange.BakedTime)
                         {
                             CurrentBPM = bpmchange.BPM;
-                            Log.Info($"NEW BPM JUST DROPPED: {CurrentBPM}");
-                            Log.Info(BpmChanges.Count);
                             BpmChanges.Remove(bpmchange);
                             break;
                         }
@@ -108,7 +106,14 @@ public partial class GameScreen : Panel
                         {
                             float noteTime = arrow.Note.BakedTime;
                             float percent = 100f * ((noteTime - CurrentTime) / ScreenTime);
-                            arrow.Style.Top = Length.Percent(percent);
+                            if(Hud.Instance.SettingsMenu.Settings.Downscroll)
+                            {
+                                arrow.Style.Top = Length.Percent(100-percent);
+                            }
+                            else
+                            {
+                                arrow.Style.Top = Length.Percent(percent);
+                            }
                             if(!arrow.Missed && CurrentTime > noteTime + NoteTimings.Error)
                             {
                                 player.ResetCombo();
@@ -265,10 +270,38 @@ public partial class GameScreen : Panel
     public void Show(bool visible)
     {
         SetClass("hide", !visible);
-        if(!visible)
+        if(visible)
         {
-            // Clear pre-existing arrows
+            ScreenTime = ((100f-Hud.Instance.SettingsMenu.Settings.ScrollSpeed)/20f)+0.0001f;
+            if(Hud.Instance.SettingsMenu.Settings.Downscroll)
+            {
+                LaneContainer.Style.Top = Length.Pixels(-100f);
+            }
+            else
+            {
+                LaneContainer.Style.Top = Length.Pixels(100f);
+            }
+            foreach(Lane lane in Lanes)
+            {
+                lane.Receptor.Delete();
+                lane.Receptor = lane.AddChild<Receptor>();
+                lane.Receptor.SetLane(lane.LaneIndex);
+                if(Hud.Instance.SettingsMenu.Settings.Downscroll)
+                {
+                    lane.Style.Top = Length.Pixels(-171f);
+                    lane.Receptor.Style.Bottom = Length.Pixels(-171f);
+                }
+                else
+                {
+                    lane.Style.Top = Length.Pixels(0f);
+                }
+            }
+        }
+        else
+        {
+            // Clear pre-existing arrows and make sure game is inactive
             ClearArrows();
+            Active = false;
         } 
     }
 
