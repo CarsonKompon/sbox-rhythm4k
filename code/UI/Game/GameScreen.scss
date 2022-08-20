@@ -226,6 +226,7 @@
                     top: -26%;
                     background-size: contain;
                     opacity: 0;
+                    transition: opacity 0.05s ease-in;
 
                     &.show
                     {

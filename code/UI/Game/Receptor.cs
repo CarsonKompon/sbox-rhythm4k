@@ -39,6 +39,6 @@ public partial class Receptor : Panel
     public void Glow(float hue = 0f)
     {
         GlowSprite.AddClass("show");
-        Timer = 0.1f;
+        Timer = -0.1f;
     }
 }

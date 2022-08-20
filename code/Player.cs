@@ -50,9 +50,9 @@ partial class RhythmPlayer : AnimatedEntity
 			foreach(Arrow arrow in arrows)
 			{
 				if(arrow.Missed) continue;
-				if(lowestOffset == -1f || arrow.Note.Offset < lowestOffset) lowestOffset = arrow.Note.Offset;
 				if(pressed[arrow.Note.Lane])
 				{
+					if(lowestOffset == -1f || arrow.Note.Offset < lowestOffset) lowestOffset = arrow.Note.Offset;
 					Score += arrow.Points;
 					Combo += 1;
 					if(Combo > MaxCombo) MaxCombo = Combo;
