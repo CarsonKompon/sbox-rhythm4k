@@ -43,45 +43,95 @@ partial class RhythmPlayer : AnimatedEntity
 				Input.Pressed(InputButton.Forward),
 				Input.Pressed(InputButton.Right),
 			};
+			bool[] held = {
+				Input.Down(InputButton.Left),
+				Input.Down(InputButton.Back),
+				Input.Down(InputButton.Forward),
+				Input.Down(InputButton.Right),
+			};
 
 			// Hit Arrows
-			List<Arrow> arrows = Hud.Instance.GameScreen.GetArrowsToHit();
+			List<Note> notes = Hud.Instance.GameScreen.GetNotesToHit();
 			float lowestOffset = -1f;
-			foreach(Arrow arrow in arrows)
+			foreach(Note note in notes.ToList())
 			{
-				if(arrow.Missed) continue;
-				if(pressed[arrow.Note.Lane])
+				if(note.Arrow != null && note.Arrow.Missed) continue;
+				bool hit = false;
+				switch((NoteType)note.Type)
 				{
-					if(lowestOffset == -1f || arrow.Note.Offset < lowestOffset) lowestOffset = arrow.Note.Offset;
-					Score += arrow.Points;
-					Combo += 1;
-					if(Combo > MaxCombo) MaxCombo = Combo;
+					case NoteType.Hold:
+						hit = held[note.Lane];
+						break;
+					default:
+						hit = pressed[note.Lane];
+						break;
+				}
+				if(hit)
+				{
+					if(lowestOffset == -1f || note.Offset < lowestOffset) lowestOffset = note.Offset;
+					Score += note.Points;
+					if((NoteType)note.Type == NoteType.Normal)
+					{
+						Combo += 1;
+						if(Combo > MaxCombo) MaxCombo = Combo;
+					}
 
-					Receptor rec = Hud.Instance.GameScreen.Lanes[arrow.Note.Lane].Receptor;
-					rec.Glow(arrow);
+					Hud.Instance.GameScreen.LivingNotes.Remove(note);
+					if(note.Arrow != null)
+					{
+						Receptor rec = Hud.Instance.GameScreen.Lanes[note.Lane].Receptor;
+						rec.Glow(note.Arrow);
 
-					Hud.Instance.GameScreen.Arrows.Remove(arrow);
-					arrow.Delete();
+						Hud.Instance.GameScreen.Arrows.Remove(note.Arrow);
+						note.Arrow.Delete();
+					}
+
+					notes.Remove(note);
 				}
 			}
 
 			// Remove any arrows that were skipped (if any)
-			foreach(Arrow arrow in arrows)
+			foreach(Note note in notes)
 			{
-				if(arrow != null && !arrow.Missed && arrow.Note.Offset < lowestOffset)
+				if(note.Offset < lowestOffset)
 				{
-					arrow.Missed = true;
+					Hud.Instance.GameScreen.LivingNotes.Remove(note);
 					ResetCombo();
+					if(note.Arrow != null) note.Arrow.Missed = true;
 				}
 			}
+
+			// TODO: Re-implement trail scoring
+			// // Hit Trails
+			// List<Trail> trails = Hud.Instance.GameScreen.GetTrailsToHit();
+			// foreach(Trail trail in trails.ToList())
+			// {
+			// 	if(held[trail.Note.Lane])
+			// 	{
+			// 		Score += trail.Points;
+			// 		Combo += 1;
+			// 		if(Combo > MaxCombo) MaxCombo = Combo;
+
+			// 		Receptor rec = Hud.Instance.GameScreen.Lanes[trail.Note.Lane].Receptor;
+			// 		rec.Glow(trail);
+
+			// 		trails.Remove(trail);
+			// 	}
+			// }
+
+			// // Check missed trails
+			// if(trails.Count > 0) ResetCombo();
 
 			if(Input.Down(InputButton.Menu))
 			{
 				QuitTime += Time.Delta;
 				if(QuitTime >= 2f)
 				{
-					RhythmGame.QuitLobby(Client.PlayerId.ToString());
-					QuitTime = -100f;
+					if(Hud.Instance.GameScreen.Active)
+					{
+						RhythmGame.QuitLobby(Client.PlayerId.ToString());
+						QuitTime = -100f;
+					}
 				}
 			}
 			else
@@ -114,7 +164,7 @@ partial class RhythmPlayer : AnimatedEntity
 		Score = 0;
 		Combo = 0;
 		MaxCombo = 0;
-		
+
         Chart chart = RhythmGame.GetChartFromString(name, difficulty);
         if(chart != null)
         {

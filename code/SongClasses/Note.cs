@@ -1,7 +1,8 @@
 public enum NoteType
 {
-    Normal = 0,
-    Mine = 1,
+    Normal,
+    Mine,
+    Hold = 999,
 }
 
 public class Note
@@ -30,4 +31,19 @@ public class Note
     /// The time in seconds that the note appears. This is calculated on game launch and is not stored in the chart file.
     /// </summary>
     public float BakedTime;
+
+    /// <summary>
+    /// The length of the note/trail in seconds. This is calculated on game launch and is not stored in the chart file.
+    /// </summary>
+    public float BakedLength;
+
+    /// <summary>
+    /// The amount of points the note is worth. This is calculated on game launch and is not stored in the chart file.
+    /// </summary>
+    public int Points = 1;
+
+    /// <summary>
+    /// The Arrow associated with the Note (if there is one)
+    /// </summary>
+    public Arrow Arrow = null;
 }

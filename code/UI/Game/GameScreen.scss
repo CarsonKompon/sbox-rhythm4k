@@ -170,12 +170,13 @@
 
         Lane
         {
-            //background-color: rgb(red, 0.1);
+            // background-color: rgb(red, 0.1);
             width: 24%;
+            justify-content: center;
 
             Receptor
             {
-                z-index: 1;
+                z-index: 5;
                 position: absolute;
                 background-size: contain;
                 width: 142px;
@@ -276,6 +277,51 @@
                 &.lane-3
                 {
                     background-image: url("/sprites/arrows/alloy/arrow-right.png");
+                }
+            }
+
+            Trail
+            {
+                //background-color: rgb(red, 0.5);
+                z-index: 1;
+                position: absolute;
+                width: 142px;
+                padding-bottom: 142px;
+                // overflow: hidden;
+
+                &.downscroll
+                {
+                    padding-bottom: 0px;
+
+                    .cap
+                    {
+                        top: 0px;
+                    }
+                }
+
+                .trunk
+                {
+                    width: 100%;
+                    height: 100%;
+                    top: 71px;
+                    position: absolute;
+                    background-size: contain;
+                    background-repeat: repeat-y;
+                    align-content: stretch;
+                    // background-image: url("/sprites/arrows/alloy/hold.png");
+
+                }
+
+                .cap
+                {
+                    position: absolute;
+                    width: 142px;
+                    height: 71px;
+                    bottom: -0px;
+                    overflow: visible;
+                    background-size: contain;
+                    align-content: stretch;
+                    // background-image: url("/sprites/arrows/alloy/hold-cap.png");
                 }
             }
         }

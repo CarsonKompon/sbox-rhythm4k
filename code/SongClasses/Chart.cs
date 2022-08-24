@@ -34,6 +34,11 @@ public class Chart
     public Song Song;
 
     /// <summary>
+    /// The total amount of notes/chain in the chart. This is calculated on game launch and is not stored in the chart file.
+    /// </summary>
+    public int TotalChain;
+
+    /// <summary>
     /// Returns the length of the song in seconds
     /// </summary>
     public float GetSongLength()
@@ -49,6 +54,28 @@ public class Chart
     {
         Note lastNote = Notes.OrderBy(o=>-o.Offset).ToList()[0];
         return lastNote.Offset;
+    }
+
+    /// <summary>
+    /// Returns a baked time (in seconds) based on BPM changes given an offset in steps.
+    /// </summary>
+    public float GetTimeFromOffset(float offset)
+    {
+        float currentOffset = 0f;
+        float currentTime = 0f;
+        float bpm = BpmChanges[0].BPM;
+        float offsetChange = 0f;
+        foreach(BpmChange bpmChange in BpmChanges.OrderBy(o=>o.Offset))
+        {
+            if(bpmChange.Offset > offset) break;
+            offsetChange = bpmChange.Offset - currentOffset;
+            currentOffset += offsetChange;
+            currentTime += (offsetChange/1000f) * ((60f/bpm)*4f);
+            bpm = bpmChange.BPM;
+        }
+        offsetChange = offset - currentOffset;
+        currentTime += (offsetChange/1000f) * ((60f/bpm)*4f);
+        return currentTime;
     }
 
     /// <summary>

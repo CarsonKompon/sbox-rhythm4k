@@ -1,0 +1,29 @@
+<link rel="stylesheet" href="/ui/menus/lobbybrowser.scss">
+
+<body class="root">
+
+    <div class="new-lobby-panel">
+        <label class="header">Create a Lobby</label>
+
+        <div class="options">
+            <div class="panel-option">
+                <label class="subheader">Lobby Name</label>
+                <textentry @ref="LobbyNameEntry" @value="LobbyName"></textentry>
+            </div>
+
+            <div class="panel-option">
+                <label class="subheader">Max Player Count</label>
+                <SliderEntry min="2" max="8" @value="PlayerCount"></SliderEntry>
+            </div>
+        </div>
+
+        <button onclick="buttonCreateLobby(this)" class="btn-create">Create Lobby</button>
+    </div>
+
+    <div @ref="LobbyList" class="lobby-list">
+        
+    </div>
+
+    <button onclick="buttonBack(this)" class="btn-back">Back</button>
+
+</body>

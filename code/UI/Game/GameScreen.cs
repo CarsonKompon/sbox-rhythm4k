@@ -2,6 +2,7 @@ using Sandbox;
 using Sandbox.UI;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 [UseTemplate]
 public partial class GameScreen : Panel
@@ -28,9 +29,12 @@ public partial class GameScreen : Panel
     public float CurrentBPM = 120f;
     public float SongLength = 120f;
     public Sound CurrentSound;
-    public RealTimeSince CurrentTime = 0f;
+    public TimeSince CurrentTime = 0f;
+    public float LastTime = 0f;
     public List<Note> Notes = new();
+    public List<Note> LivingNotes = new();
     public List<Arrow> Arrows = new();
+    public List<Trail> Trails = new();
     public List<BpmChange> BpmChanges = new();
     public bool Active = false;
     public int CritValue = 1;
@@ -70,6 +74,7 @@ public partial class GameScreen : Panel
         {
             if(Active)
             {
+
                 // Check for BPM Change
                 if(BpmChanges.Count > 0)
                 {
@@ -90,11 +95,33 @@ public partial class GameScreen : Panel
                     List<Note> notes = GetNextNotes();
                     foreach(Note note in notes)
                     {
+                        LivingNotes.Add(note);
+                        Notes.Remove(note);
+                        if(note.Type == (int)NoteType.Hold) continue;
                         Lane lane = Lanes[note.Lane];
                         Arrow arrow = lane.AddChild<Arrow>();
                         arrow.SetNote(note);
                         Arrows.Add(arrow);
-                        Notes.Remove(note);
+
+                        if(note.Length > 0f)
+                        {
+                            Trail trail = lane.AddChild<Trail>();
+                            trail.SetNote(note);
+                            Trails.Add(trail);
+                        }
+                        note.Arrow = arrow;
+                    }
+                }
+                else if(Arrows.Count == 0 && Active)
+                {
+                    FinishedSong();
+                }
+
+                foreach(Note note in LivingNotes.ToList())
+                {
+                    if(note.BakedTime <= CurrentTime - NoteTimings.Error)
+                    {
+                        LivingNotes.Remove(note);
                     }
                 }
 
@@ -102,13 +129,14 @@ public partial class GameScreen : Panel
                 {
                     foreach(Panel child in lane.Children)
                     {
+                        // Loop through all Arrows
                         if(child is Arrow arrow)
                         {
                             float noteTime = arrow.Note.BakedTime;
                             float percent = 100f * ((noteTime - CurrentTime) / ScreenTime);
                             if(Hud.Instance.SettingsMenu.Settings.Downscroll)
                             {
-                                arrow.Style.Top = Length.Percent(100-percent);
+                                arrow.Style.Top = Length.Percent(100f-percent);
                             }
                             else
                             {
@@ -125,6 +153,45 @@ public partial class GameScreen : Panel
                                 arrow.Delete();
                             }
                         }
+
+                        // Loop through all trails
+                        if(child is Trail trail)
+                        {
+                            float positionPercent = 100f * ((trail.Note.BakedTime - CurrentTime) / ScreenTime);
+                            float lengthPercent = 100f * (trail.Note.BakedLength / ScreenTime);
+                            if(Hud.Instance.SettingsMenu.Settings.Downscroll)
+                            {
+                                float downscrollPos = 100f-positionPercent-lengthPercent+6f;
+                                if(downscrollPos > 0f && positionPercent < -2.5f)
+                                {
+                                    lengthPercent += positionPercent + 2.5f;
+                                    positionPercent = -2.5f;
+                                    downscrollPos = 100f-positionPercent-lengthPercent+6f;
+                                }
+                                if(downscrollPos <= 0f && lengthPercent >= 100f)
+                                {
+                                    Log.Info("ayo");
+                                    trail.Style.Top = Length.Percent(0f);
+                                    trail.Style.Height = Length.Percent(100f-positionPercent+6f);
+                                }
+                                else
+                                {
+                                    trail.Style.Top = Length.Percent(downscrollPos);
+                                    trail.Style.Height = Length.Percent(lengthPercent);
+                                }
+                            }
+                            else
+                            {
+                                if(positionPercent < 0f)
+                                {
+                                    lengthPercent += positionPercent;
+                                    positionPercent = 0f;
+                                }
+                                trail.Style.Top = Length.Percent(positionPercent);
+                                trail.Style.Height = Length.Percent(lengthPercent);
+                            }
+                            if(positionPercent + lengthPercent <= 0f) trail.Delete();
+                        }
                     }
                 }
 
@@ -140,6 +207,8 @@ public partial class GameScreen : Panel
             ComboContainer.SetClass("hide", player.Combo < 10);
             ComboLabel.Text = player.Combo.ToString();
         }
+
+        LastTime = CurrentTime;
     }
 
     public async void StartSong(Chart chart)
@@ -150,15 +219,14 @@ public partial class GameScreen : Panel
         await GameTask.DelayRealtimeSeconds(2);
 
         StartChart();
-
-        await GameTask.DelayRealtimeSeconds(SongLength + 3f);
-
-        FinishedSong();
     }
 
-    public void FinishedSong()
+    public async void FinishedSong()
     {
         Active = false;
+
+        await GameTask.DelayRealtimeSeconds(3);
+
         Lobby.SetFinished(Local.PlayerId.ToString());
     }
 
@@ -182,7 +250,7 @@ public partial class GameScreen : Panel
         ComboContainer.SetClass("hide", true);
         CurrentBPM = Song.BPM;
         SongLength = Chart.GetSongLength();
-        CritValue = (int)MathF.Floor(10000000f/Chart.Notes.Count);
+        CritValue = (int)MathF.Floor(10000000f/Chart.TotalChain);
 
         foreach(Note note in Chart.Notes)
         {
@@ -193,14 +261,14 @@ public partial class GameScreen : Panel
         {
             BpmChanges.Add(bpmchange);
         }
-
-        Log.Info(CritValue);
     }
 
     public void StartChart()
     {
         CurrentSound = Sound.FromScreen(Song.Sound);
         CurrentTime = Song.Offset;
+        LastTime = CurrentTime;
+        // CurrentSteps = SecondsToSteps(CurrentTime);
         Active = true;
     }
 
@@ -210,28 +278,53 @@ public partial class GameScreen : Panel
         Active = false;
     }
 
-    public List<Arrow> GetArrowsToHit()
+    public List<Note> GetNotesToHit()
     {
         float[] noteTimes = {1000, 1000, 1000, 1000};
-        Arrow[] distantArrows = {null, null, null, null};
-        List<Arrow> arrows = new();
-        foreach(Arrow arrow in Arrows)
+        List<Note> notes = new();
+        foreach(Note note in LivingNotes)
         {
-            float noteTime = arrow.Note.BakedTime;
+            float noteTime = note.BakedTime;
             float time = CurrentTime;
             float distance = MathF.Abs(time - noteTime);
-            if(distance < NoteTimings.Error && noteTime < noteTimes[arrow.Note.Lane])
+            float timing = NoteTimings.Error;
+            if((NoteType)note.Type == NoteType.Hold) timing = NoteTimings.Critical;
+            if(distance < timing && noteTime < noteTimes[note.Lane])
             {
-                if(distantArrows[arrow.Note.Lane] != null) arrows.Remove(distantArrows[arrow.Note.Lane]);
-                distantArrows[arrow.Note.Lane] = arrow;
-                noteTimes[arrow.Note.Lane] = distance;
-                arrow.Points = (int)MathF.Floor((float)CritValue / (distance > NoteTimings.Critical ? 2f : 1f));
-                arrows.Add(arrow);
+                noteTimes[note.Lane] = distance;
+                if((NoteType)note.Type == NoteType.Hold)
+                {
+                    note.Points = CritValue;
+                }
+                else
+                {
+                    note.Points = (int)MathF.Floor((float)CritValue / (distance > NoteTimings.Critical ? 2f : 1f));
+                }
+                notes.Add(note);
             }
         }
 
-        return arrows;
+        return notes;
     }
+
+    // public List<Trail> GetTrailsToHit()
+    // {
+    //     List<Trail> trails = new();
+    //     foreach(Trail trail in Trails)
+    //     {
+    //         bool hit = false;
+    //         while(CurrentTime >= trail.lastHit)
+    //         {
+    //             if(trail.lastHit > trail.Note.Offset) hit = true;
+    //             trail.lastHit += (60f / CurrentBPM) / 4f;
+    //         }
+    //         if(hit && CurrentTime < trail.Note.BakedTime + trail.Note.BakedLength)
+    //         {
+    //             trails.Add(trail);
+    //         }
+    //     }
+    //     return trails;
+    // }
 
     public List<Note> GetNextNotes()
     {
@@ -252,12 +345,14 @@ public partial class GameScreen : Panel
         {
             foreach(Panel child in lane.Children)
             {
-                if(child is Arrow arrow)
+                if(child is Arrow || child is Trail)
                 {
-                    arrow.Delete();
+                    child.Delete();
                 }
             }
         }
+        Arrows.Clear();
+        Trails.Clear();
     }
 
     public void StopMusic()
@@ -267,12 +362,17 @@ public partial class GameScreen : Panel
         Active = false;
     }
 
+    private float SecondsToSteps(float seconds)
+    {
+        return MathC.Map(seconds, 0, 4f * (60f / CurrentBPM), 0, 1000f);
+    }
+
     public void Show(bool visible)
     {
         SetClass("hide", !visible);
         if(visible)
         {
-            ScreenTime = ((100f-Hud.Instance.SettingsMenu.Settings.ScrollSpeed)/20f)+0.0001f;
+            ScreenTime = MathC.Map(Hud.Instance.SettingsMenu.Settings.ScrollSpeed, 0, 100, 2, 0.05f);
             if(Hud.Instance.SettingsMenu.Settings.Downscroll)
             {
                 LaneContainer.Style.Top = Length.Pixels(-100f);

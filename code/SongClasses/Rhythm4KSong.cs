@@ -50,6 +50,7 @@ public class Rhythm4KSong : GameResource
         foreach(Chart chart in Song.Charts)
         {
             chart.Song = Song;
+            chart.TotalChain = 0;
             
             List<BpmChange> bpmchanges = new();
             foreach(BpmChange bpmchange in chart.BpmChanges.OrderBy(o=>o.Offset))
@@ -57,28 +58,32 @@ public class Rhythm4KSong : GameResource
                 bpmchanges.Add(bpmchange);
             }
 
-            float bpm = 0;
-            float time = 0;
-            float realTime = 0;
-            foreach(Note note in chart.Notes.OrderBy(o=>o.Offset))
+            List<Note> holds = new();
+            foreach(Note note in chart.Notes.ToList())
             {
-                float timeChange = note.Offset - time;
-                time = note.Offset;
-
-                // Check for BPM Changes
-                foreach(BpmChange bpmchange in bpmchanges)
+                note.BakedTime = chart.GetTimeFromOffset(note.Offset);
+                chart.TotalChain += 1;
+                if(note.Length > 0f)
                 {
-                    if(time >= bpmchange.Offset)
+                    note.BakedLength = chart.GetTimeFromOffset(note.Offset + note.Length) - note.BakedTime;
+                    Log.Info(note.BakedLength);
+                    float length = note.Length;
+                    float offset = note.Offset;
+                    while(length >= 62.5f)
                     {
-                        bpm = bpmchange.BPM;
-                        bpmchange.BakedTime = realTime + ((timeChange / 250f) * (60f / bpm)); 
-                        bpmchanges.Remove(bpmchange);
-                        break;
-                    }
+                        offset += 62.5f;
+                        length -= 62.5f;
+                        var hold = new Note();
+                        hold.Offset = offset;
+                        hold.Length = 0f;
+                        hold.Lane = note.Lane;
+                        hold.Type = (int)NoteType.Hold;
+                        hold.BakedTime = chart.GetTimeFromOffset(offset);
+                        chart.Notes.Add(hold);
+                        chart.TotalChain += 1;
+                    } 
+                    holds.Add(note);
                 }
-
-                realTime += (timeChange / 250f) * (60f / bpm);
-                note.BakedTime = realTime;
             }
         }
 

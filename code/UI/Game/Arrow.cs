@@ -6,7 +6,6 @@ using System.Collections.Generic;
 public partial class Arrow : Image
 {
     public Note Note;
-    public int Points = 1;
     public bool Missed = false;
     public void SetNote(Note note)
     {
