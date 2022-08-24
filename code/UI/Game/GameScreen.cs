@@ -29,7 +29,7 @@ public partial class GameScreen : Panel
     public float CurrentBPM = 120f;
     public float SongLength = 120f;
     public Sound CurrentSound;
-    public TimeSince CurrentTime = 0f;
+    public RealTimeSince CurrentTime = 0f;
     public float LastTime = 0f;
     public List<Note> Notes = new();
     public List<Note> LivingNotes = new();

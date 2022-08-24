@@ -66,7 +66,6 @@ public class Rhythm4KSong : GameResource
                 if(note.Length > 0f)
                 {
                     note.BakedLength = chart.GetTimeFromOffset(note.Offset + note.Length) - note.BakedTime;
-                    Log.Info(note.BakedLength);
                     float length = note.Length;
                     float offset = note.Offset;
                     while(length >= 62.5f)

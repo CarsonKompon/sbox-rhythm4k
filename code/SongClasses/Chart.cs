@@ -44,7 +44,7 @@ public class Chart
     public float GetSongLength()
     {
         Note lastNote = Notes.OrderBy(o=>-o.BakedTime).ToList()[0];
-        return lastNote.BakedTime;
+        return lastNote.BakedTime + lastNote.BakedLength;
     }
 
     /// <summary>

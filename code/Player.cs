@@ -50,6 +50,11 @@ partial class RhythmPlayer : AnimatedEntity
 				Input.Down(InputButton.Right),
 			};
 
+			foreach(Lane lane in Hud.Instance.GameScreen.Lanes)
+			{
+				lane.Receptor.SetClass("pressing", held[lane.LaneIndex]);
+			}
+
 			// Hit Arrows
 			List<Note> notes = Hud.Instance.GameScreen.GetNotesToHit();
 			float lowestOffset = -1f;

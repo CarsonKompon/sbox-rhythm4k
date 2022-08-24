@@ -180,7 +180,14 @@
                 position: absolute;
                 background-size: contain;
                 width: 142px;
-                height: 142px;
+                height: 142px; 
+                // transform-origin: 50% 50%;
+                transition: transform 0.02s ease-in;
+
+                &.pressing
+                {
+                    transform: translate(-24% 0%) scale(0.9);
+                }
 
                 .receptor-arrow
                 {
