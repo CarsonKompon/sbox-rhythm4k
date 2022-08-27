@@ -1,0 +1,158 @@
+@import "/ui/styles/rootbody.scss";
+@import "/ui/styles/backtopleft.scss";
+
+.lobby-host-panel
+{
+    position: absolute;
+    width: 30%;
+    height: 70%;
+    top: 15%;
+    left: 5%;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    color: white;
+    background-color: rgb(black, 0.4);
+    overflow: hidden;
+    text-shadow: 4px 4px black;
+
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+
+    .header
+    {
+        font-size: 52px;
+        font-weight: 700;
+    }
+
+    .song-info
+    {
+        width: 90%;
+        height: 60%;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-around;
+
+        .info-header
+        {
+            height: 70%;
+
+            image
+            {
+                width: 800px;
+                height: 800px;
+                aspect-ratio: 1;
+                background-image: url("sprites/menu/lobby/select-song.png");
+                background-size: cover;
+                
+                transition: transform 0.05s ease-in;
+
+                &:hover
+                {
+                    transform: scale(1.05);
+                }
+            }
+        }
+
+        .song-title
+        {
+            font-size: 42px;
+            font-weight: 600;
+        }
+
+        .song-artist
+        {
+            font-size: 24px;
+            text-shadow: 2px 2px black;
+        }
+    }
+
+    .btn-ready
+    {
+        font-size: 42px;
+        font-weight: 800;
+        background-color: grey;
+        color: black;
+        border-radius: 10%;
+        margin-top: 20px;
+        padding: 8 25 8 25;
+        text-align: center;
+        justify-content: center;
+        text-shadow: 0px 0px grey;
+        transition: all 0.1s ease-in-out;
+
+        &.active
+        {
+            background-color: white;
+            text-shadow: 0px 0px white;
+
+            &:hover
+            {
+                transform: scale(1.1);
+            }
+        }
+    }
+}
+
+.other-panel
+{
+    position: absolute;
+    width: 55%;
+    height: 70%;
+    top: 15%;
+    left: 40%;
+    background-color: rgb(black, 0.4);
+    padding: 48px;
+    justify-content: space-between;
+
+
+    .player-list
+    {
+        width: 60%;
+        height: 100%;
+        // background-color: blue;
+        overflow: scroll;
+        flex-direction: column;
+
+        PlayerButton
+        {
+            width: 100%;
+            height: 120px;
+            background-color: white;
+            border-radius: 48px;
+            padding: 26px;
+            
+            .pfp
+            {
+                border-radius: 100%;
+                margin-right: 16px;
+                image-rendering: trilinear;
+            }
+
+            .name
+            {
+                color: black;
+                font-size: 42px;
+                font-weight: 500;
+            }
+
+            .status
+            {
+                margin-left: 16px;
+                height: 100%;
+                aspect-ratio: 1;
+                background-image: url("/sprites/menu/lobby/host.png");
+                background-size: contain;
+                image-rendering: trilinear;
+            }
+        }
+    }
+
+    RhythmChatBox
+    {
+        position: relative;
+        width: 35%;
+        height: 100%;
+    }
+
+}

@@ -1,0 +1,34 @@
+<link rel="stylesheet" href="/ui/menus/lobbymenu.scss">
+
+<body class="root">
+
+    <div class="lobby-host-panel">
+
+        <label @ref="LobbyName" class="header">Lobby Name</label>
+
+        <div class="song-info">
+            <div class="info-header">
+                <image @ref="AlbumArt" onclick="buttonSongSelect(this)" class="cover-art"></image>
+            </div>
+            <label @ref="SongTitle" class="song-title"></label>
+            <label @ref="SongArtist" class="song-artist"></label>
+        </div>
+
+        <div @ref="DifficultiesList" class="difficulties">
+            
+        </div>
+
+        <button @ref="ReadyButton" onclick="buttonReady(this)" class="btn-ready">Start</button>
+    </div>
+
+    <div class="other-panel">
+        <div @ref="PlayerList" class="player-list">
+
+        </div>
+
+        <RhythmChatBox />
+    </div>
+
+    <button onclick="buttonBack(this)" class="btn-back">Back</button>
+
+</body>

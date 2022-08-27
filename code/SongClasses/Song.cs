@@ -19,7 +19,7 @@ public class Song
     public string Sound;
 
     /// <summary>
-    /// The sound file for the song
+    /// The album art file for the song
     /// </summary>
     public string AlbumArt;
 

@@ -18,7 +18,6 @@ public partial class LobbyBrowser : Panel
     {
         string lobbyName = LobbyName == "" ? LobbyNameEntry.Placeholder : LobbyName;
         RhythmGame.CreateLobby(Local.PlayerId.ToString(), lobbyName, MaxPlayerCount);
-        Hud.Instance.ChangeMenuState(MainMenuState.Lobby);
     }
 
     public void buttonBack()

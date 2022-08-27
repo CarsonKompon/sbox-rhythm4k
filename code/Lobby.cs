@@ -1,25 +1,50 @@
 using Sandbox;
 using System.Collections.Generic;
 
-public partial class Lobby : Entity
+public partial class RhythmLobby : Entity
 {
-    [Net] public string Name {get;set;} = "Unnamed Lobby";
     [Net] public int MaxPlayerCount {get;set;} = 8;
     [Net] public List<long> PlayerIds {get;set;} = new();
     [Net] public long Host {get;set;}
     [Net] public bool Hidden {get;set;} = false;
+    [Net] public bool Open {get;set;} = false;
     [Net] public bool InProgress {get;set;} = false;
     [Net] public int Finished {get;set;} = 0;
-    public Chart Chart;
+    [Net] private string SongName {get;set;} = "";
+    private Song __Song;
+    public Song Song
+    {
+        get
+        {
+            if(__Song == null || __Song.Name != SongName)
+            {
+                __Song = RhythmGame.GetSongFromString(SongName);
+            }
+            return __Song;
+        }
+        set
+        {
+            __Song = value;
+        }
+    }
 
-    public Lobby(){}
-    public Lobby(long host, string name = "Unnamed Lobby", int maxPlayerCount = 8, bool hidden = false)
+    public RhythmLobby(){}
+    public RhythmLobby(long host, string name = "Unnamed Lobby", int maxPlayerCount = 8, bool hidden = false)
     {
         Host = host;
         Name = name;
         MaxPlayerCount = maxPlayerCount;
         Hidden = hidden;
         AddPlayer(host);
+        
+        RhythmPlayer player = RhythmGame.GetPlayerFromId(Host);
+        player.SetLobby(this);
+    }
+
+    public override void Spawn()
+    {
+        base.Spawn();
+        Transmit = TransmitType.Always;
     }
 
     [ConCmd.Server]
@@ -28,11 +53,11 @@ public partial class Lobby : Entity
         Chart chart = RhythmGame.GetChartFromString(name, difficulty);
         if(chart != null)
         {
-            Lobby lobby =  RhythmGame.GetLobbyFromIdent(lobbyIdent);
+            RhythmLobby lobby =  RhythmGame.GetLobbyFromIdent(lobbyIdent);
             if(lobby != null)
             {
                 Log.Info($"Rhythm4K: Loaded Chart '{chart.Name} ({chart.Difficulty})'");
-                lobby.Chart = chart;
+                lobby.SetSong(chart.Song);
             }
         }
     }
@@ -40,7 +65,7 @@ public partial class Lobby : Entity
     [ConCmd.Server]
     public static void StartGame(int lobbyIdent)
     {
-        Lobby lobby = RhythmGame.GetLobbyFromIdent(lobbyIdent);
+        RhythmLobby lobby = RhythmGame.GetLobbyFromIdent(lobbyIdent);
         if(lobby != null)
         {
             Log.Info($"Rhythm4K: Starting Game in Lobby #{lobbyIdent}");
@@ -52,7 +77,7 @@ public partial class Lobby : Entity
                 {
                     if(cl.PlayerId == id && cl.Pawn is RhythmPlayer player)
                     {
-                        player.StartGame(To.Single(cl), lobby.Chart.Song.Name, lobby.Chart.Name);
+                        player.StartGame(To.Single(cl));
                     }
                 }
             }
@@ -66,7 +91,7 @@ public partial class Lobby : Entity
         Client client = RhythmGame.GetClientFromId(id);
         if(client?.Pawn is RhythmPlayer player)
         {
-            Lobby lobby = RhythmGame.GetLobbyFromIdent(player.LobbyIdent);
+            RhythmLobby lobby = RhythmGame.GetLobbyFromIdent(player.LobbyIdent);
             if(lobby != null)
             {
                 Log.Info($"Rhythm4K: Player {client.Name} finished in Lobby #{player.LobbyIdent}");
@@ -82,7 +107,7 @@ public partial class Lobby : Entity
 
     public void ReturnToLobby()
     {
-        Log.Info($"Rhythm4K: Lobby #{NetworkIdent} returned to lobby");
+        Log.Info($"Rhythm4K: Lobby #{NetworkIdent} returned to lobby menu");
         if(MaxPlayerCount == 1)
         {
             ReturnToSongSelect(Host);
@@ -107,6 +132,24 @@ public partial class Lobby : Entity
         {
             player.ReturnToSongSelect(To.Single(client));
         }
+    }
+
+    public void SetSong(Song song)
+    {
+        SongName = song.Name;
+        foreach(Client client in Client.All)
+        {
+            if(PlayerIds.Contains(client.PlayerId))
+            {
+                UpdateLobbySong(To.Single(client));
+            }
+        }
+    }
+
+    [ClientRpc]
+    public void UpdateLobbySong()
+    {
+        Hud.Instance.LobbyMenu.SetSong(Song);
     }
 
     public void AddPlayer(long id)

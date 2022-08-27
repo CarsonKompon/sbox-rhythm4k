@@ -25,9 +25,7 @@ public partial class MainMenu : Panel
 
     public void buttonSingleplayer(Button button)
     {
-        // TODO: Fix this.
         RhythmGame.CreateLobby(Local.PlayerId.ToString(), Local.DisplayName + "'s Lobby", 1, true);
-        Hud.Instance.ChangeMenuState(MainMenuState.SongSelect);
     }
 
     public void buttonMultiplayer(Button button)

@@ -112,10 +112,11 @@ public partial class GameScreen : Panel
                         note.Arrow = arrow;
                     }
                 }
-                else if(Arrows.Count == 0 && Active)
+                else if(Arrows.Count == 0 && Trails.Count == 0 && LivingNotes.Count == 0 && Active)
                 {
                     FinishedSong();
                 }
+                Log.Info($"{Arrows.Count} {Trails.Count} {LivingNotes.Count}");
 
                 foreach(Note note in LivingNotes.ToList())
                 {
@@ -227,7 +228,7 @@ public partial class GameScreen : Panel
 
         await GameTask.DelayRealtimeSeconds(3);
 
-        Lobby.SetFinished(Local.PlayerId.ToString());
+        RhythmLobby.SetFinished(Local.PlayerId.ToString());
     }
 
     public void SetChart(Chart chart)

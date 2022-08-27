@@ -12,7 +12,7 @@ public static class NoteTimings
 public partial class RhythmGame : Sandbox.Game
 {
 	public Hud Hud {get;set;}
-	[Net] public static List<Lobby> Lobbies {get;set;} = new();
+	[Net] public static List<RhythmLobby> Lobbies {get;set;} = new();
 	public RhythmGame()
 	{
 		if(IsServer)
@@ -47,28 +47,19 @@ public partial class RhythmGame : Sandbox.Game
 	public static void CreateLobby(string host, string name = "Unnamed Lobby", int maxPlayerCount = 8, bool hidden = false)
 	{
 		long id = long.Parse(host);
-		Lobby lobby = new Lobby(id, name, maxPlayerCount, hidden);
+		RhythmLobby lobby = new RhythmLobby(id, name, maxPlayerCount, hidden);
 		Lobbies.Add(lobby);
 		
-		Log.Info($"Rhythm4K: Creating Lobby '{name}' as #{lobby.NetworkIdent}");
-		foreach(Client client in Client.All)
-		{
-			if(client.PlayerId == id)
-			{
-				if(client.Pawn is RhythmPlayer player)
-				{
-					player.SetLobby(lobby.NetworkIdent);
-				}
-				break;
-			}
-		}
+		Log.Info($"Rhythm4K: Created Lobby '{name}' as #{lobby.NetworkIdent}");
+		RhythmPlayer player = GetPlayerFromId(id);
+		player?.SetLobby(lobby);
 	}
 
 	[ConCmd.Server]
 	public static void JoinLobby(string idString, int lobbyIdent)
 	{
 		long id = long.Parse(idString);
-		Lobby lobby = GetLobbyFromIdent(lobbyIdent);
+		RhythmLobby lobby = GetLobbyFromIdent(lobbyIdent);
 		if(lobby != null)
 		{
 			Client client = GetClientFromId(id);
@@ -88,7 +79,7 @@ public partial class RhythmGame : Sandbox.Game
 		Client client = GetClientFromId(id);
 		if(client != null && client.Pawn is RhythmPlayer player && player.LobbyIdent != -1)
 		{
-			Lobby lobby = GetLobbyFromIdent(player.LobbyIdent);
+			RhythmLobby lobby = GetLobbyFromIdent(player.LobbyIdent);
 			if(lobby != null)
 			{
 				Log.Info($"Rhythm4K: Player {id} is leaving Lobby #{player.LobbyIdent}");
@@ -110,7 +101,7 @@ public partial class RhythmGame : Sandbox.Game
 		Client client = GetClientFromId(id);
 		if(client?.Pawn is RhythmPlayer player && player.LobbyIdent != -1)
 		{
-			Lobby lobby = GetLobbyFromIdent(player.LobbyIdent);
+			RhythmLobby lobby = GetLobbyFromIdent(player.LobbyIdent);
 			if(lobby != null)
 			{
 				Log.Info($"Rhythm4K: Player {id} is quitting Lobby #{player.LobbyIdent}");
@@ -118,7 +109,7 @@ public partial class RhythmGame : Sandbox.Game
 			}
 		}
 	}
-
+	
 	// [ConCmd.Server]
 	// public static void QuitGame(string idString)
 	// {
@@ -133,7 +124,7 @@ public partial class RhythmGame : Sandbox.Game
 
 	public static bool InLobby(long id)
 	{
-		foreach(Lobby lobby in Lobbies)
+		foreach(RhythmLobby lobby in Lobbies)
 		{
 			foreach(long player in lobby.PlayerIds)
 			{
@@ -143,9 +134,22 @@ public partial class RhythmGame : Sandbox.Game
 		return false;
 	}
 
-	public static Lobby GetLobbyFromIdent(int lobbyIdent)
+	public static RhythmPlayer GetPlayerFromId(long id)
 	{
-		foreach(Lobby lobby in Lobbies)
+		foreach(Client client in Client.All)
+		{
+			if(client.PlayerId == id && client.Pawn is RhythmPlayer player)
+			{
+				return player;
+			}
+		}
+		return null;
+	}
+
+	public static RhythmLobby GetLobbyFromIdent(int lobbyIdent)
+	{
+		Log.Info(Lobbies.Count);
+		foreach(RhythmLobby lobby in Lobbies)
 		{
 			if(lobby.NetworkIdent == lobbyIdent)
 			{
@@ -160,6 +164,18 @@ public partial class RhythmGame : Sandbox.Game
 		foreach(Client client in Client.All)
 		{
 			if(client.PlayerId == id) return client;
+		}
+		return null;
+	}
+
+	public static Song GetSongFromString(string songName)
+	{
+		foreach(Rhythm4KSong r4kSong in Rhythm4KSong.All)
+		{
+			if(r4kSong.Song.Name == songName)
+			{
+				return r4kSong.Song;
+			}
 		}
 		return null;
 	}

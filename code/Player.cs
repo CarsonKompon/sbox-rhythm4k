@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Sandbox;
 
-partial class RhythmPlayer : AnimatedEntity
+public partial class RhythmPlayer : AnimatedEntity
 {
 	[Net] public int LobbyIdent {get;set;} = -1;
 	public bool InGame = false;
@@ -13,6 +13,7 @@ partial class RhythmPlayer : AnimatedEntity
 	public int Combo = 0;
 	public int MaxCombo  = 0;
 	public float QuitTime = 0f;
+	public Chart Chart;
 	/// <summary>
 	/// Called when the entity is first created 
 	/// </summary>
@@ -38,16 +39,16 @@ partial class RhythmPlayer : AnimatedEntity
 		{
 			// Get Inputs
 			bool[] pressed = {
-				Input.Pressed(InputButton.Left),
-				Input.Pressed(InputButton.Back),
-				Input.Pressed(InputButton.Forward),
-				Input.Pressed(InputButton.Right),
+				Input.Pressed(InputButton.Left) || Input.Pressed(InputButton.Slot1),
+				Input.Pressed(InputButton.Back) || Input.Pressed(InputButton.Slot2),
+				Input.Pressed(InputButton.Forward) || Input.Pressed(InputButton.Slot9),
+				Input.Pressed(InputButton.Right) || Input.Pressed(InputButton.Slot0),
 			};
 			bool[] held = {
-				Input.Down(InputButton.Left),
-				Input.Down(InputButton.Back),
-				Input.Down(InputButton.Forward),
-				Input.Down(InputButton.Right),
+				Input.Down(InputButton.Left) || Input.Down(InputButton.Slot1),
+				Input.Down(InputButton.Back) || Input.Down(InputButton.Slot2),
+				Input.Down(InputButton.Forward) || Input.Down(InputButton.Slot9),
+				Input.Down(InputButton.Right) || Input.Down(InputButton.Slot0),
 			};
 
 			foreach(Lane lane in Hud.Instance.GameScreen.Lanes)
@@ -151,30 +152,31 @@ partial class RhythmPlayer : AnimatedEntity
 		Combo = 0;
 	}
 
-	public void SetLobby(int lobbyIdent)
+	public void SetLobby(RhythmLobby lobby)
 	{
-		LobbyIdent = lobbyIdent;
-		SetLobbyClient(To.Single(Client), lobbyIdent);
+		Log.Info(lobby);
+		LobbyIdent = lobby.NetworkIdent;
+		SetLobbyClient(To.Single(Client), LobbyIdent);
 	}
 
 	[ClientRpc]
 	public void SetLobbyClient(int lobbyIdent)
 	{
-		Hud.Instance.SetLobby(LobbyIdent);
+		Entity ent = RhythmLobby.FindByIndex(lobbyIdent);
+		Hud.Instance.SetLobby(ent as RhythmLobby);
 	}
 
 	[ClientRpc]
-    public void StartGame(string name, string difficulty)
+    public void StartGame()
     {
 		Score = 0;
 		Combo = 0;
 		MaxCombo = 0;
 
-        Chart chart = RhythmGame.GetChartFromString(name, difficulty);
-        if(chart != null)
+        if(Chart != null)
         {
             Hud.Instance.ChangeMenuState(MainMenuState.Game);
-            Hud.Instance.GameScreen.StartSong(chart);
+            Hud.Instance.GameScreen.StartSong(Chart);
 			InGame = true;
         }
     }

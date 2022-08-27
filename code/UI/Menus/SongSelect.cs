@@ -20,6 +20,8 @@ public partial class SongSelect : Panel
     public Label LabelSelectedChart {get;set;}
     public int LobbyIdent;
 
+    private bool SinglePlayer = true;
+
     public static SongSelect Instance;
 
     public SongSelect()
@@ -60,7 +62,8 @@ public partial class SongSelect : Panel
     public static void SelectChart(Chart chart)
     {
         Instance.SelectedChart = chart;
-        Lobby.SetChart(Instance.LobbyIdent, chart.Song.Name, chart.Name);
+        if(Local.Pawn is RhythmPlayer player) player.Chart = chart;
+        RhythmLobby.SetChart(Instance.LobbyIdent, chart.Song.Name, chart.Name);
         foreach(var panel in Instance.DifficultyScrollBody.Children)
         {
             if(panel is DifficultyButton button)
@@ -80,18 +83,32 @@ public partial class SongSelect : Panel
     {
         if(button.HasClass("active"))
         {
-            Hud.Instance.ChangeMenuState(MainMenuState.None);
-            if(Local.Pawn is RhythmPlayer player)
+            if(SinglePlayer)
             {
-                Lobby.StartGame(player.LobbyIdent);
+                Hud.Instance.ChangeMenuState(MainMenuState.None);
+                if(Local.Pawn is RhythmPlayer player)
+                {
+                    RhythmLobby.StartGame(player.LobbyIdent);
+                }
+            }
+            else
+            {
+                Hud.Instance.ChangeMenuState(MainMenuState.Lobby);
             }
         }
     }
 
     public void buttonBack(Button button)
     {
-        RhythmGame.LeaveLobby(Local.PlayerId.ToString());
-        Hud.Instance.ChangeMenuState(MainMenuState.Title);
+        if(SinglePlayer)
+        {
+            RhythmGame.LeaveLobby(Local.PlayerId.ToString());
+            Hud.Instance.ChangeMenuState(MainMenuState.Title);
+        }
+        else
+        {
+            Hud.Instance.ChangeMenuState(MainMenuState.Lobby);
+        }
     }
 
     public void Deselect()
@@ -104,6 +121,28 @@ public partial class SongSelect : Panel
         Instance.DifficultyScrollBody.DeleteChildren();
         Instance.SelectedChart = null;
         Instance.ButtonStart.SetClass("active", false);
+    }
+
+    public void Show(bool visible = true)
+    {
+        SetClass("hide", !visible);
+        if(visible)
+        {
+            Deselect();
+            if(Local.Pawn is RhythmPlayer player)
+            {
+                RhythmLobby lobby = RhythmLobby.FindByIndex(player.LobbyIdent) as RhythmLobby;
+                SinglePlayer = lobby.MaxPlayerCount == 1;
+            }
+            if(SinglePlayer)
+            {
+                ButtonStart.Text = "Start";
+            }
+            else
+            {
+                ButtonStart.Text = "Select";
+            }
+        }
     }
 }
 
