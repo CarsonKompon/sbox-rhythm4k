@@ -4,8 +4,8 @@ using System.Collections.Generic;
 public partial class RhythmLobby : Entity
 {
     [Net] public int MaxPlayerCount {get;set;} = 8;
-    [Net] public List<long> PlayerIds {get;set;} = new();
-    [Net] public long Host {get;set;}
+    [Net] public List<Client> Clients {get;set;} = new();
+    [Net] public Client Host {get;set;}
     [Net] public bool Hidden {get;set;} = false;
     [Net] public bool Open {get;set;} = false;
     [Net] public bool InProgress {get;set;} = false;
@@ -31,14 +31,13 @@ public partial class RhythmLobby : Entity
     public RhythmLobby(){}
     public RhythmLobby(long host, string name = "Unnamed Lobby", int maxPlayerCount = 8, bool hidden = false)
     {
-        Host = host;
+        Host = RhythmGame.GetClientFromId(host);
         Name = name;
         MaxPlayerCount = maxPlayerCount;
         Hidden = hidden;
-        AddPlayer(host);
+        AddPlayer(Host);
         
-        RhythmPlayer player = RhythmGame.GetPlayerFromId(Host);
-        player.SetLobby(this);
+        if(Host.Pawn is RhythmPlayer player) player.SetLobby(this);
     }
 
     public override void Spawn()
@@ -71,14 +70,11 @@ public partial class RhythmLobby : Entity
             Log.Info($"Rhythm4K: Starting Game in Lobby #{lobbyIdent}");
             lobby.InProgress = true;
             lobby.Finished = 0;
-            foreach(Client cl in Client.All)
+            foreach(Client cl in lobby.Clients)
             {
-                foreach(long id in lobby.PlayerIds)
+                if(cl.Pawn is RhythmPlayer player)
                 {
-                    if(cl.PlayerId == id && cl.Pawn is RhythmPlayer player)
-                    {
-                        player.StartGame(To.Single(cl));
-                    }
+                    player.StartGame(To.Single(cl));
                 }
             }
         }
@@ -91,17 +87,29 @@ public partial class RhythmLobby : Entity
         Client client = RhythmGame.GetClientFromId(id);
         if(client?.Pawn is RhythmPlayer player)
         {
+            player.Ready = false;
             RhythmLobby lobby = RhythmGame.GetLobbyFromIdent(player.LobbyIdent);
             if(lobby != null)
             {
                 Log.Info($"Rhythm4K: Player {client.Name} finished in Lobby #{player.LobbyIdent}");
                 lobby.Finished++;
 
-                if(lobby.Finished >= lobby.PlayerIds.Count)
+                if(lobby.Finished >= lobby.Clients.Count)
                 {
                     lobby.ReturnToLobby();
                 }
             }
+        }
+    }
+
+    [ConCmd.Server]
+    public static void SetReady(string idString, bool ready = true)
+    {
+        long id = long.Parse(idString);
+        Client client = RhythmGame.GetClientFromId(id);
+        if(client?.Pawn is RhythmPlayer player)
+        {
+            player.Ready = ready;
         }
     }
 
@@ -113,36 +121,29 @@ public partial class RhythmLobby : Entity
             ReturnToSongSelect(Host);
             return;
         }
-        foreach(Client cl in Client.All)
+        foreach(Client cl in Clients)
         {
-            foreach(long id in PlayerIds)
+            if(cl.Pawn is RhythmPlayer player)
             {
-                if(cl.PlayerId == id && cl.Pawn is RhythmPlayer player)
-                {
-                    player.ReturnToLobby(To.Single(cl));
-                }
+                player.ReturnToLobby(To.Single(cl));
             }
         }
     }
 
-    public void ReturnToSongSelect(long id)
+    public void ReturnToSongSelect(Client cl)
     {
-        Client client = RhythmGame.GetClientFromId(id);
-        if(client?.Pawn is RhythmPlayer player)
+        if(cl?.Pawn is RhythmPlayer player)
         {
-            player.ReturnToSongSelect(To.Single(client));
+            player.ReturnToSongSelect(To.Single(cl));
         }
     }
 
     public void SetSong(Song song)
     {
         SongName = song.Name;
-        foreach(Client client in Client.All)
+        foreach(Client client in Clients)
         {
-            if(PlayerIds.Contains(client.PlayerId))
-            {
-                UpdateLobbySong(To.Single(client));
-            }
+            UpdateLobbySong(To.Single(client));
         }
     }
 
@@ -152,61 +153,66 @@ public partial class RhythmLobby : Entity
         Hud.Instance.LobbyMenu.SetSong(Song);
     }
 
-    public void AddPlayer(long id)
+    public void AddPlayer(Client cl)
     {
-        if(HasPlayer(id)) return;
+        if(HasPlayer(cl)) return;
 
-        PlayerIds.Add(id);
+        RhythmLobby.SetReady(cl.PlayerId.ToString(), false);
+
+        Clients.Add(cl);
     }
 
-    public bool RemovePlayer(long id)
+    public bool RemovePlayer(Client cl)
     {
-        if(!HasPlayer(id)) return false;
+        if(!HasPlayer(cl)) return false;
 
-        if(id == Host && PlayerIds.Count > 1)
-        {
-            // Migrate Hosts
-            SetHost(PlayerIds[0]);
-        }
-
-        Client client = RhythmGame.GetClientFromId(id);
-        if(client.Pawn is RhythmPlayer player)
+        if(cl.Pawn is RhythmPlayer player)
         {
             player.LobbyIdent = -1;
         }
+        Clients.Remove(cl);
 
-        PlayerIds.Remove(id);
+        if(cl.PlayerId == Host.PlayerId && Clients.Count > 1)
+        {
+            // Migrate Hosts
+            SetHost(Clients[0]);
+        }
 
-        if(PlayerIds.Count == 0) return true;
+        if(Clients.Count == 0) return true;
         return false;
     }
 
-    public void PlayerQuit(long id)
+    public void PlayerQuit(Client cl)
     {
-        if(!HasPlayer(id)) return;
+        if(!HasPlayer(cl)) return;
 
-        if(id == Host && MaxPlayerCount == 1)
+        if(cl.PlayerId == Host.PlayerId && MaxPlayerCount == 1)
         {
-            Log.Info($"Rhythm4K: Player {id} returned to song select");
+            Log.Info($"Rhythm4K: Player {cl.PlayerId} returned to song select");
             // Return to song select
-            ReturnToSongSelect(id);
+            ReturnToSongSelect(cl);
             return;
         }
 
-        RemovePlayer(id);
+        RemovePlayer(cl);
     }
 
     public bool HasPlayer(long id)
     {
-        foreach(long player in PlayerIds)
+        foreach(Client client in Clients)
         {
-            if(player == id) return true;
+            if(client.PlayerId == id) return true;
         }
         return false;
     }
 
-    public void SetHost(long id)
+    public bool HasPlayer(Client cl)
     {
-        Host = id;
+        return Clients.Contains(cl);
+    }
+
+    public void SetHost(Client cl)
+    {
+        Host = cl;
     }
 }

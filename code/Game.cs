@@ -66,7 +66,7 @@ public partial class RhythmGame : Sandbox.Game
 			if(client != null && client.Pawn is RhythmPlayer player)
 			{
 				Log.Info($"Rhythm4K: Player {id} is joining lobby #{lobbyIdent}");
-				lobby.AddPlayer(id);
+				lobby.AddPlayer(client);
 				player.LobbyIdent = lobby.NetworkIdent;
 			}
 		}
@@ -83,7 +83,7 @@ public partial class RhythmGame : Sandbox.Game
 			if(lobby != null)
 			{
 				Log.Info($"Rhythm4K: Player {id} is leaving Lobby #{player.LobbyIdent}");
-				if(lobby.RemovePlayer(id))
+				if(lobby.RemovePlayer(client))
 				{
 					// If the lobby is empty
 					Log.Info($"Rhythm4K: Lobby #{lobby.NetworkIdent} has been destroyed");
@@ -105,7 +105,7 @@ public partial class RhythmGame : Sandbox.Game
 			if(lobby != null)
 			{
 				Log.Info($"Rhythm4K: Player {id} is quitting Lobby #{player.LobbyIdent}");
-				lobby.PlayerQuit(id);
+				lobby.PlayerQuit(client);
 			}
 		}
 	}
@@ -126,10 +126,7 @@ public partial class RhythmGame : Sandbox.Game
 	{
 		foreach(RhythmLobby lobby in Lobbies)
 		{
-			foreach(long player in lobby.PlayerIds)
-			{
-				if(player == id) return true;
-			}
+			if(lobby.HasPlayer(id)) return true;
 		}
 		return false;
 	}

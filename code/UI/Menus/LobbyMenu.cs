@@ -19,6 +19,27 @@ public partial class LobbyMenu : Panel
         SetClass("hide", true);
     }
 
+    [Event.Frame]
+    public void OnFrame()
+    {
+        if(Lobby != null)
+        {
+            if(Local.PlayerId == Lobby.Host.PlayerId)
+            {
+                bool canStart = true;
+                foreach(Client cl in Lobby.Clients)
+                {
+                    if(cl.Pawn is RhythmPlayer player && !player.Ready)
+                    {
+                        canStart = false;
+                        break;
+                    }
+                }
+                ReadyButton.SetClass("active", canStart);
+            }
+        }
+    }
+
     public void SetLobby(RhythmLobby lobby)
     {
         Lobby = lobby;
@@ -43,12 +64,12 @@ public partial class LobbyMenu : Panel
             }
         }
 
-        foreach(long id in Lobby.PlayerIds)
+        foreach(Client cl in Lobby.Clients)
         {
-            if(!existingPlayers.Contains(id))
+            if(!existingPlayers.Contains(cl.PlayerId))
             {
                 PlayerButton playerButton = PlayerList.AddChild<PlayerButton>();
-                playerButton.SetPlayer(RhythmGame.GetClientFromId(id));
+                playerButton.SetPlayer(cl);
             }
         }
     }
@@ -69,14 +90,17 @@ public partial class LobbyMenu : Panel
         SetClass("hide", !show);
     }
 
-    public void buttonReady()
+    public void buttonReady(Button button)
     {
-        // TODO: Ready up or start+
+        if(button.HasClass("active"))
+        {
+            RhythmLobby.StartGame(Lobby.NetworkIdent);
+        }
     }
 
     public void buttonSongSelect()
     {
-        if(Local.PlayerId == Lobby.Host)
+        if(Local.PlayerId == Lobby.Host.PlayerId)
         {
             Hud.Instance.ChangeMenuState(MainMenuState.SongSelect);
         }
@@ -100,6 +124,7 @@ public partial class PlayerButton : Panel
     public Panel Background;
     public Image Pfp;
     public Label Name;
+    public Label Difficulty;
     public Image Status;
     public long PlayerId;
 
@@ -107,10 +132,12 @@ public partial class PlayerButton : Panel
     {
         Pfp = AddChild<Image>();
         Name = AddChild<Label>();
+        Difficulty = AddChild<Label>();
         Status = AddChild<Image>();
 
         Pfp.AddClass("pfp");
         Name.AddClass("name");
+        Difficulty.AddClass("difficulty");
         Status.AddClass("status");
     }
 
@@ -119,6 +146,11 @@ public partial class PlayerButton : Panel
         PlayerId = cl.PlayerId;
         Name.Text = cl.Name;
         Pfp.SetTexture($"avatar:{PlayerId}");
+    }
+
+    public void SetChart(Chart chart)
+    {
+        Difficulty.Text = chart.Difficulty.ToString();
     }
 
 	protected override void OnClick( MousePanelEvent e )

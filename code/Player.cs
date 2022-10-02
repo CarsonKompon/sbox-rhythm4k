@@ -8,6 +8,8 @@ namespace Sandbox;
 public partial class RhythmPlayer : AnimatedEntity
 {
 	[Net] public int LobbyIdent {get;set;} = -1;
+	[Net] public bool Ready {get;set;} = false;
+	[Net] public string ChartName {get;set;} = "";
 	public bool InGame = false;
 	public int Score= 0;
 	public int Combo = 0;
@@ -164,6 +166,17 @@ public partial class RhythmPlayer : AnimatedEntity
 	{
 		Entity ent = RhythmLobby.FindByIndex(lobbyIdent);
 		Hud.Instance.SetLobby(ent as RhythmLobby);
+	}
+
+	[ConCmd.Server]
+	public static void SetChart(string songName, string chartName)
+	{
+		Client cl = ConsoleSystem.Caller;
+		if(cl.Pawn is RhythmPlayer player)
+		{
+			player.Chart = RhythmGame.GetChartFromString(songName, chartName);
+			 
+		}
 	}
 
 	[ClientRpc]

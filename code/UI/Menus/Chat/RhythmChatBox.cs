@@ -83,7 +83,7 @@ public partial class RhythmChatBox : ChatBox
 	[ConCmd.Client( "chat_addinfo", CanBeCalledFromServer = true )]
 	public static void AddInformation( string message, string avatar = null )
 	{
-		Instance?.AddEntry( null, message, avatar );
+		// Instance?.AddEntry( null, message, avatar );
 	}
 
 	[ConCmd.Server( "say" )]

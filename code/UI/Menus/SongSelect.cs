@@ -62,7 +62,7 @@ public partial class SongSelect : Panel
     public static void SelectChart(Chart chart)
     {
         Instance.SelectedChart = chart;
-        if(Local.Pawn is RhythmPlayer player) player.Chart = chart;
+        RhythmPlayer.SetChart(chart.Song.Name, chart.Name);
         RhythmLobby.SetChart(Instance.LobbyIdent, chart.Song.Name, chart.Name);
         foreach(var panel in Instance.DifficultyScrollBody.Children)
         {
@@ -93,7 +93,12 @@ public partial class SongSelect : Panel
             }
             else
             {
+                RhythmLobby.SetReady(Local.PlayerId.ToString());
                 Hud.Instance.ChangeMenuState(MainMenuState.Lobby);
+                if(Local.Pawn is RhythmPlayer player)
+                {
+                    RhythmLobby.SetChart(player.LobbyIdent, SelectedChart.Song.Name, SelectedChart.Name);
+                }
             }
         }
     }

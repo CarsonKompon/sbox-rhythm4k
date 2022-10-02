@@ -12,9 +12,11 @@
 .menu
 {
     width: 50%;
-    height: 70%;
+    height: 50%;
     padding: 10px;
-    //background-color: rgb(black, 0.1);
+    padding-left: 100px;
+    padding-right: 100px;
+    background-color: rgb(black, 0.4);
 
     overflow: scroll;
     flex-direction: column;
@@ -40,6 +42,7 @@
 
 .btn-back
 {
+    top: 100px;
     color: white;
     text-shadow: 10px 10px black;
     font-family: Poppins;
